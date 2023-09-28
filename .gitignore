@@ -2,6 +2,10 @@
 
 # dependencies
 node_modules/
+.history/
+babel.config.js
+package-lock.json
+firebase/
 
 # Expo
 .expo/
@@ -33,3 +37,4 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
