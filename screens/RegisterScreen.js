@@ -1,6 +1,6 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, KeyboardAvoidingView, Pressable, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Button, KeyboardAvoidingView, Pressable, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import { auth, db } from '../firebase/firebase';
@@ -27,29 +27,31 @@ export default function Register({ navigation }) {
             {/* When typing avoid the keyboard from blocking the phone */}
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? "padding" : "height"} style={{ flex: 1 }}>
                 {/* Don't touch the keyboard and the keyboard will go down */}
-                <TouchableWithoutFeedback>
-                    {/* Create account text */}
-                    <Text style={{ textAlign: 'center', width: '100%', fontWeight: 'bold', color: 'black', marginBottom: '15%', fontSize: 40, }}>
-                        Create Account
-                    </Text>
+                <TouchableWithoutFeedback onPress={()=> Keyboard.dismiss}>
+                    <View>
+                        {/* Create account text */}
+                        <Text style={{ textAlign: 'center', width: '100%', fontWeight: 'bold', color: 'black', marginBottom: '15%', fontSize: 40, }}>
+                            Create Account
+                        </Text>
 
-                    {/* If an error has occured print ut the message */}
-                    {errorValue !== 0 ? (
-                        <Text>
-                            {errorRegisterMessages[errorValue - 1]}
-                        </Text>) : null}
+                        {/* If an error has occured print ut the message */}
+                        {errorValue !== 0 ? (
+                            <Text>
+                                {errorRegisterMessages[errorValue - 1]}
+                            </Text>) : null}
 
-                    {/* Prompt and input containers */}
-                    <RegisterCredentialContainer value={name} setValue={setName} text={"Name"} secureText={false} />
-                    <RegisterCredentialContainer value={email} setValue={setEmail} text={"Email"} secureText={false} />
-                    <RegisterCredentialContainer value={password} setValue={setPassword} text={"Password"} secureText={true} />
-                    <RegisterCredentialContainer value={password2} setValue={setPassword2} text={"Re-Enter Password"} secureText={true} />
+                        {/* Prompt and input containers */}
+                        <RegisterCredentialContainer value={name} setValue={setName} text={"Name"} secureText={false} />
+                        <RegisterCredentialContainer value={email} setValue={setEmail} text={"Email"} secureText={false} />
+                        <RegisterCredentialContainer value={password} setValue={setPassword} text={"Password"} secureText={true} />
+                        <RegisterCredentialContainer value={password2} setValue={setPassword2} text={"Re-Enter Password"} secureText={true} />
 
-                    {/* Container for the confirm button */}
-                    <View style={styles.confirmButton}>
-                        {/* Confirm button */}
-                        {/* When pressed it will call the register function which will make an account or send back an error */}
-                        <Button title="Confirm" onPress={register(name = { name }, email = { email }, password = { password }, navigation = { navigation }, setErrorValue = { setErrorValue })} />
+                        {/* Container for the confirm button */}
+                        <View style={styles.confirmButton}>
+                            {/* Confirm button */}
+                            {/* When pressed it will call the register function which will make an account or send back an error */}
+                            <Button title="Confirm" onPress={() => register(name, email, password, navigation, setErrorValue)} />
+                        </View>
                     </View>
                 </TouchableWithoutFeedback>
             </KeyboardAvoidingView>

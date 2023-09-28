@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Button, Image, TextInput, TouchableOpacity, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, Button, Image, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/firebase';
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -16,31 +16,31 @@ export default function Login({ navigation }) {
 
     return (
         //to avoid the notch on the phones and round edges
-        <SafeAreaView style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
             {/* The logo and text */}
-            <View style={{ width: '60%', height: '30%', left: '22%', top: '16%', bottom: '10%' }}>
+            <View style={{ width: '60%', height: '30%', left: '22%', top: '4%', bottom: '10%' }}>
                 <Image
                     style={{ width: '100%', height: '80%', resizeMode: 'contain' }}
                     source={
                         require('../assets/placeholderLogo.png')
                     } />
                 <Text adjustsFontSizeToFit style={{ fontSize: 25, fontWeight: 'bold', textAlign: 'center', color: 'red' }}>Placeholder Logo</Text>
-                <Text adjustsFontSizeToFit style={{ textAlign: 'center', top: '6%', fontWeight: 'bold', right: '7' }}>Account loginLogic</Text>
+                <Text adjustsFontSizeToFit style={{ textAlign: 'center', top: '6%', fontWeight: 'bold', right: '7' }}>Account Login</Text>
             </View>
 
             {/* Allow user to enter email  */}
             <View style={styles.loginCredentialContainer}>
                 <Ionicons adjustsFontSizeToFit name="mail" color="#3b444b" size={20} style={{ right: '2%' }} />
-                <UserInput placeholder={"E-mail"} value={email} setValue={setEmail} secureText={false} />
+                <UserInput placeholder={1} value={email} setValue={setEmail} secureText={false} />
             </View>
             {/* Allow user to enter password */}
             <View style={styles.loginCredentialContainer}>
                 <Ionicons adjustsFontSizeToFit name="lock-closed" color="#3b444b" size={20} style={{ right: '2%' }} />
-                <UserInput placeholder={"Password"} value={password} setValue={setPassword} secureText={true} />
+                <UserInput placeholder={2} value={password} setValue={setPassword} secureText={true} />
             </View>
             {/* Login Button */}
             <View style={styles.loginButton}>
-                <Button title="Login" onPress={() => { loginLogic(setErrorValue = { setErrorValue }, navigation = {navigation}) }} />
+            <Button title="Login" onPress={() => { loginLogic(setErrorValue, navigation, email, password) }} />
                 {/* If there is an error, display the error message */}
                 {errorValue !== 0 ? (
                     <Text style={styles.errorMessage}>
@@ -49,13 +49,13 @@ export default function Login({ navigation }) {
                 ) : null}
             </View>
             {/* Allow user to register */}
-            <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', top: '25%' }}>
                 <Text>
                     Don't have an account?
                 </Text>
                 {/* Navigate to the register screen */}
-                <TouchableOpacity onPress={navigateToRegister(navigation = {navigation})}>
-                    <Text style={{ color: '#AD40AF', fontSize: 'italic', fontWeight: 'bold', textDecorationLine: 'underline' }}>
+                <TouchableOpacity onPress={() => {navigateToRegister(navigation = {navigation})}}>
+                    <Text style={{ color: '#AD40AF', fontStyle: 'italic', fontWeight: 'bold', textDecorationLine: 'underline' }}>
                         Register
                     </Text>
                 </TouchableOpacity>
@@ -74,9 +74,10 @@ export default function Login({ navigation }) {
                     <Image style={{ width: '100%', height: '100%', resizeMode: 'contain' }} source={require('../assets/meta.png')}/>
                 </View>
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
+
 
 const styles = StyleSheet.create({
     loginCredentialContainer: {
@@ -85,17 +86,19 @@ const styles = StyleSheet.create({
         borderColor: '#e8e8e8',
         borderWidth: 1,
         borderRadius: 5,
-        marginTop: '3%',
-        marginLeft: '12%',
+        top: '15%',
+        left: '7%',
         padding: '2%',
-        paddingHorizontal: '3%',
+        paddingHorizontal: 3,
         flexDirection: 'row',
         alignItems: 'center',
+        marginVertical: '1%',
     }, loginButton: {
         resizeMode: 'contain',
         borderRadius: 1,
         width: '80%',
         height: '5%',
+        top: '9%',
         backgroundColor: '#ADD8E6',
         marginVertical: '7%',
         marginHorizontal: '12%',
@@ -114,8 +117,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         marginVertical: '8%',
         marginHorizontal: '11%',
+        top: '25%',
     },
 })
+
 
 const navigateToHome = ({ navigation }) => {
     //Navigate to the home screen
@@ -127,10 +132,10 @@ const navigateToRegister = ({ navigation }) => {
     navigation.navigate('Register');
 }
 
-const loginLogic = async (setErrorValue, navigation) => {
+const loginLogic = async (setErrorValue, navigation,email,password) => {
     try {
         //Sign in with the email and password
-        await signInWithEmailAndPassword(auth, emailValue, passwordValues);
+        await signInWithEmailAndPassword(auth, email, password);
         //Navigate to the home screen
         navigateToHome(navigation);
 
@@ -147,15 +152,17 @@ const loginLogic = async (setErrorValue, navigation) => {
     }
 };
 
-function UserInput(placeholder, value, setValue, secureText) {
-    //Allow user to enter text
+function UserInput({ placeholder, value, setValue, secureText }) {
+    const placeholderValue = placeholder === 1 ? 'E-mail' : 'Password';
+  
     return (
-        <TextInput
-            placeholder={placeholder}
-            value={value}
-            onChangeText={setValue}
-            secureTextEntry={secureText}
-        />
-    )
-}
+      <TextInput
+        placeholder={placeholderValue}
+        value={value}
+        onChangeText={() => setValue(value)} // Use the 'text' parameter to set the value
+        secureTextEntry={secureText}
+        
+      />
+    );
+  }
 
