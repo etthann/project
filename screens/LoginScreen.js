@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
         borderRadius: 1,
         width: '80%',
         height: '5%',
-        top: '9%',
+        top: '8%',
         backgroundColor: '#ADD8E6',
         marginVertical: '7%',
         marginHorizontal: '12%',
@@ -157,12 +157,10 @@ function UserInput({ placeholder, value, setValue, secureText }) {
   
     return (
       <TextInput
-        placeholder={placeholderValue}
+        placeholder={placeholderValue + "                                                                                                                                                                                   "}
         value={value}
-        onChangeText={() => setValue(value)} // Use the 'text' parameter to set the value
+        onChangeText={(text) => setValue(text)} // Use the 'text' parameter to set the value
         secureTextEntry={secureText}
-        
       />
     );
   }
-
