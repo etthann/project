@@ -1,5 +1,15 @@
 {
   "expo": {
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow the app to access your photos.",
+          "cameraPermission": "Allow the app to access your camera.",
+          "microphonePermission": "Allow the app to acees your microphone."
+        }
+      ]
+    ],
     "name": "IHATERN",
     "slug": "IHATERN",
     "version": "1.0.0",

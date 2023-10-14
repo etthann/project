@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, Button, Image, TextInput, TouchableOpacity, SafeAreaView, Pressable, ScrollView, Modal } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import NetInfo from '@react-native-community/netinfo';
-
-
+import ProfileModal from '../components/ProfileModal';
 
 export default function Home({ navigation }) {
-
+    
+    const [profileModalVisible, setProfileModalVisible] = useState(false);
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -14,14 +14,15 @@ export default function Home({ navigation }) {
                 <Text style={{ fontSize: 30, fontWeight: 'bold', fontStyle: 'italic', top: '7%', left: '20%' }}>
                     Welcome
                 </Text>
-                <TouchableOpacity style={{ top: '6%', left: '500%' }} onPress={() => { profile}}>
+                <TouchableOpacity style={{ top: '6%', left: '500%' }} onPress={() => {setProfileModalVisible(true)}}>
+                    <ProfileModal profileModalVisible = {profileModalVisible} setProfileModalVisible={setProfileModalVisible} />
                     <Ionicons name="person-circle-outline" size={40} color="black" />
-                </TouchableOpacity>
+                </TouchableOpacity>  
             </View>
             <View style={{ height: 1, backgroundColor: 'black', opacity: 0.5, top: '5%' }} />
             <View style={styles.card}>
                 <View style={{ height: '100%' }}>
-                    <TouchableOpacity style={styles.circle}>
+                    <TouchableOpacity style={styles.circle} onPress={() => {}}>
                         <Image source={require("../assets/favicon.png")} style={{ alignSelf: 'center', top: '30%' }} />
                     </TouchableOpacity>
                     <ContactFriend object={"heart"} method={placeholder} bordercolor={"red"} index={4} />
@@ -32,7 +33,7 @@ export default function Home({ navigation }) {
                     <OnlineIndicator />
                 </View>
                 <Text adjustsFontSizeToFit style={{ fontSize: 30, left: '12%', opacity: 0.5, bottom: '30%' }}>
-                    Name
+                    Add Friend
                 </Text>
             </View>
             <Text style={{ fontSize: 20, color: 'lightgrey', fontWeight: 'bold', alignSelf: 'center', top: '1%' }}>
@@ -42,16 +43,16 @@ export default function Home({ navigation }) {
                 <SmallWidget text={"Reminder:"} onPress={placeholder} iconName={"alarm-outline"} />
                 <SmallWidget text={"Calendar:"} onPress={placeholder} iconName={"calendar-outline"} />
             </View>
-            <View style = {{top: '10%'}}>
+            <View style={{ top: '10%' }}>
                 <Text style={{ textAlign: 'center', top: '10%', color: 'lightgrey', }}>
                     This was made by: {''}
                 </Text>
                 <Text style={{ textAlign: 'center', color: 'lightgrey', fontWeight: 'bold', fontStyle: 'italic', }}>
                     Ethan Ieong
                 </Text>
-                <View style={{ flexDirection: 'row', left:'10%'}}>
-                    <Text style={{ textAlign: 'center', color: 'lightgrey', fontWeight: 'bold', fontStyle: 'italic',left:'300%' }}>Github: </Text>
-                    <Text style={{ textAlign: 'center', color: 'lightgrey', fontWeight: 'bold', fontStyle: 'italic',left:'300%' }}>https://github.com/etthann/ihateRN</Text>
+                <View style={{ flexDirection: 'row', left: '20%' }}>
+                    <Text style={{ textAlign: 'center', color: 'lightgrey', fontWeight: 'bold', fontStyle: 'italic', left: '350%' }}>Github: </Text>
+                    <Text style={{ textAlign: 'center', color: 'lightgrey', fontWeight: 'bold', fontStyle: 'italic', left: '350%' }}>https://github.com/etthann/ihateRN</Text>
                 </View>
             </View>
         </SafeAreaView>
@@ -172,15 +173,3 @@ function SmallWidget({ text, onPress, iconName }) {
     );
 }
 
-
-const profile = () => {
-    const [showProfile, setShowProfile] = useState(false);
-
-    return (
-        <Modal animationType='fade-in' transparent={true} visible={showProfile} onRequestClose={() => setShowProfile(false)} style={{flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'white'}}>
-            <View style = {{height: '100%', width: '100%', backgroundColor: 'black'}}>
-
-            </View>
-        </Modal>
-    )
-}
