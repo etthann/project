@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Button, Image, TextInput, TouchableOpacity } fr
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/firebase';
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Login({ navigation }) {
 
@@ -14,9 +15,31 @@ export default function Login({ navigation }) {
     const errorLoginMessages = ["Your credentials aren't found in our database. Please try again.", "Your email is invalid. Please try again.", "Your password is incorrect. Please try again.", "You have tried to login too many times. Please try again later."]
     const [errorValue, setErrorValue] = useState(0);
 
+    const loginLogic = async () => {
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            // Navigate to the home screen
+            navigateToHome({ navigation });
+        } catch (error) {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            console.log(errorCode + "\n" + errorMessage);
+            if (errorCode === 'auth/user-not-found') {
+                setErrorValue(1);
+            } else if (errorCode === 'auth/invalid-email') {
+                setErrorValue(2);
+            } else if (errorCode === 'auth/wrong-password') {
+                setErrorValue(3); // Change the error code for wrong password
+            } else if (errorCode === 'auth/too-many-requests') {
+                setErrorValue(4); // Change the error code for too many requests
+            }
+        }
+    };
+
+
     return (
         //to avoid the notch on the phones and round edges
-        <View style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1,backgroundColor:'white' }}>
             {/* The logo and text */}
             <View style={{ width: '60%', height: '30%', left: '22%', top: '4%', bottom: '10%' }}>
                 <Image
@@ -40,7 +63,7 @@ export default function Login({ navigation }) {
             </View>
             {/* Login Button */}
             <View style={styles.loginButton}>
-            <Button title="Login" onPress={() => { loginLogic(setErrorValue, navigation, email, password) }} />
+                <Button title="Login" onPress={() => { loginLogic() }} />
                 {/* If there is an error, display the error message */}
                 {errorValue !== 0 ? (
                     <Text style={styles.errorMessage}>
@@ -54,7 +77,7 @@ export default function Login({ navigation }) {
                     Don't have an account?
                 </Text>
                 {/* Navigate to the register screen */}
-                <TouchableOpacity onPress={() => {navigateToRegister(navigation = {navigation})}}>
+                <TouchableOpacity onPress={() => { navigateToRegister(navigation = { navigation }) }}>
                     <Text style={{ color: '#AD40AF', fontStyle: 'italic', fontWeight: 'bold', textDecorationLine: 'underline' }}>
                         Register
                     </Text>
@@ -63,18 +86,18 @@ export default function Login({ navigation }) {
             <View style={{ flexDirection: 'row' }}>
                 {/* Allow users to sign in with Apple */}
                 <View style={styles.socialMediaSignIn}>
-                    <Image style={{ width: '100%', height: '100%', resizeMode: 'contain' }} source={require('../assets/apple.png')}/>
+                    <Image style={{ width: '100%', height: '100%', resizeMode: 'contain' }} source={require('../assets/apple.png')} />
                 </View>
                 {/* Allow users to sign in with Google */}
                 <View style={styles.socialMediaSignIn}>
-                    <Image style={{ width: '100%', height: '100%', resizeMode: 'contain' }} source={require('../assets/google.png')}/>
+                    <Image style={{ width: '100%', height: '100%', resizeMode: 'contain' }} source={require('../assets/google.png')} />
                 </View>
                 {/* Allow users to sign in with Meta */}
                 <View style={styles.socialMediaSignIn}>
-                    <Image style={{ width: '100%', height: '100%', resizeMode: 'contain' }} source={require('../assets/meta.png')}/>
+                    <Image style={{ width: '100%', height: '100%', resizeMode: 'contain' }} source={require('../assets/meta.png')} />
                 </View>
             </View>
-        </View>
+        </SafeAreaView>
     );
 }
 
@@ -122,9 +145,9 @@ const styles = StyleSheet.create({
 })
 
 
-const navigateToHome = ({ navigation }) => {
+const navigateToHome = ({ navigation, userId }) => {
     //Navigate to the home screen
-    navigation.navigate('Home');
+    navigation.navigate('Home', { userId });
 };
 
 const navigateToRegister = ({ navigation }) => {
@@ -132,35 +155,18 @@ const navigateToRegister = ({ navigation }) => {
     navigation.navigate('Register');
 }
 
-const loginLogic = async (setErrorValue, navigation,email,password) => {
-    try {
-        //Sign in with the email and password
-        await signInWithEmailAndPassword(auth, email, password);
-        //Navigate to the home screen
-        navigateToHome(navigation);
 
-    } catch (error) { //If there is an error, set the error value to the corresponding error message
-        if (error.code === 'auth/user-not-found') {
-            setErrorValue(1);
-        } else if (error.code === 'auth/invalid-email') {
-            setErrorValue(2);
-        } else if (error.code === 'auth/wrong-password') {
-            setErrorValue(1);
-        } else if (error.code === 'auth/too-many-requests') {
-            setErrorValue(3);
-        }
-    }
-};
+
 
 function UserInput({ placeholder, value, setValue, secureText }) {
     const placeholderValue = placeholder === 1 ? 'E-mail' : 'Password';
-  
+
     return (
-      <TextInput
-        placeholder={placeholderValue + "                                                                                                                                                                                   "}
-        value={value}
-        onChangeText={(text) => setValue(text)} // Use the 'text' parameter to set the value
-        secureTextEntry={secureText}
-      />
+        <TextInput
+            placeholder={placeholderValue + "                                                                                                                                                                                   "}
+            value={value}
+            onChangeText={(text) => setValue(text)} // Use the 'text' parameter to set the value
+            secureTextEntry={secureText}
+        />
     );
-  }
+}

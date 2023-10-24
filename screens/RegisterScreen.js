@@ -4,13 +4,14 @@ import { View, Text, StyleSheet, TextInput, Button, KeyboardAvoidingView, Pressa
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import { auth, db } from '../firebase/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Register({ navigation }) {
 
-    //Register with name
+    //Value of the name
     const [name, setName] = useState('');
 
-    //Register with email
+    //Value of the email
     const [email, setEmail] = useState('');
 
     //Register with password
@@ -21,6 +22,7 @@ export default function Register({ navigation }) {
     const [errorValue, setErrorValue] = useState(0);
     const errorRegisterMessages = ["true", "Invalid email, please enter a valid email.", "Please enter a password longer than 6 characters.", password === '' ? "Please enter a valid email/password" : "An error has occured please try again", "Passwords do not match."]
 
+    //Value of the phone number
     const [phoneNumber, setPhoneNumber] = useState('');
 
 
@@ -107,6 +109,7 @@ function RegisterCredentialContainer({ value, setValue, text, secureText }) {
         <View>
             <Text style={{ fontSize: 15, left: '10%' }}>{promptText[text]}</Text>
             <TextInput placeholder={`${promptText[text]}:`} onChangeText={(input) => (setValue(input))} value={value} style={styles.textInput} secureTextEntry={secureText} />
+            
         </View>
     );
 }
@@ -115,7 +118,7 @@ function RegisterCredentialContainer({ value, setValue, text, secureText }) {
 
 
 
-const navigateToHome = ({ navigation }) => {
+const navigateToHome = ({ navigation}) => {
     //Navigate Home
     navigation.navigate('Home');
 }
@@ -124,7 +127,7 @@ const navigateToLogin = ({ navigation }) => {
     navigation.navigate('Login')
 }
 
-const register = async ({ name, email, password, password2, navigation, setErrorValue }) => {
+const register = async ({ name, email, password, password2, navigation, setErrorValue}) => {
 
     // If the password is the same as the re-entered password
     if (password === password2) {
@@ -135,11 +138,23 @@ const register = async ({ name, email, password, password2, navigation, setError
             // Get the user
             const user = userCredential.user;
             // Set the user's name, email and password in the database
-            set(ref(db, `users/${user.uid}`), {
+            const userId = user.uid;
+            set(ref(db, `users/${userId}`), {
                 name: name,
                 email: email,
-                password: password
+                friendId: "",
+                phoneNumber: phoneNumber,
+                incomingRequests: [],
+                outgoingRequests: [],
+                
             });
+
+            storeData('userId', userId);
+            storeData('name', name);
+            storeData('email', email);
+            storeData('password', password);
+            storeData('friendId', '');
+
             // Navigate home
             navigateToHome(navigation = { navigation });
 
@@ -162,3 +177,10 @@ const register = async ({ name, email, password, password2, navigation, setError
     }
 };
 
+const storeData = async (key,value) => {
+    try {
+        await AsyncStorage.setItem(key, value);
+    } catch (error) {
+        console.log(error);
+    }
+}
