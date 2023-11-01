@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Button, Image, TextInput, TouchableOpacity, SafeAreaView, Pressable, ScrollView, Modal } from 'react-native';
-
+import {
+    StyleSheet,
+    Text,
+    View,
+    Image,
+    TouchableOpacity,
+    SafeAreaView,
+    ScrollView,
+    Modal,
+} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import NetInfo from '@react-native-community/netinfo';
 import ProfileModal from '../components/ProfileModal';
 import AddFriendModal from '../components/AddFriendModal';
 import { auth, db } from '../firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { onValue, ref } from 'firebase/database';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { onValue, ref, set,get,child } from 'firebase/database';
 
 export default function Home({ navigation }) {
-
     // Profile modal
     const [profileModalVisible, setProfileModalVisible] = useState(false);
 
@@ -24,50 +29,64 @@ export default function Home({ navigation }) {
     const [nameValue, setNameValue] = useState("");
     const [email, setEmail] = useState("");
 
+    // Notification modal
+    const [notificationModal, setNotificationModal] = useState(false);
+    const [newNotification, setNewNotification] = useState(false);
+
+    const [friendRequests, setFriendRequests] = useState([]);
+
+    const [phoneNumber, setPhoneNumber] = useState("");
+
     // User ID
     const [id, setId] = useState("");
 
-    useEffect(() => {
-        getData("name",setNameValue);
-        console.log("Name value:", nameValue)
-    }, [])
-
-    
 
     // Get the user's ID
     useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                const uid = user.uid;
-                setId(uid);
-            }
-        })
-        // Get the user's name and email
-        onValue(ref(db, `users/${id}`), (snapshot) => {
-            const data = snapshot.val();
-            setNameValue(data.name);
-            setEmail(data.email);
-            if (data.FriendId !== "") {
-                setFriend(false);
-            }
-        })
-    }, [])
+        try {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    const uid = user.uid;
+                    setId(uid);
+                    onValue(ref(db, `users/${uid}/friendRequests`), (snapshot) => {
+                        if (snapshot.exists() && snapshot.val() !== "null") {
+                            setPhoneNumber(snapshot.val().phoneNumber);
+                            setNameValue(snapshot.val().name);
+                            setEmail(snapshot.val().email);
+                        }
+                    });
+                }
+            });
+        } catch (error) {
+            console.log(error);
+        }}, []);
+
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
-            
             {/* Header section */}
             <View style={{ flexDirection: 'row' }}>
                 <Text adjustsFontSizeToFit style={{ fontSize: 30, fontWeight: 'bold', fontStyle: 'italic', top: '7%', left: '20%' }}>
                     Welcome {nameValue ? nameValue.charAt(0).toUpperCase() + nameValue.slice(1).toLowerCase() : ''}
                 </Text>
                 {/* Profile button to open the profile modal */}
-                <TouchableOpacity style={{ top: '70%', left: '74%',position: 'absolute'}} onPress={() => {}}>
-                    <Ionicons name = "notifications-outline" size = {35} color = "black"/>
-
+                <TouchableOpacity style={{ top: '70%', left: '74%', position: 'absolute' }} onPress={() => { setNotificationModal(true) }}>
+                    <FriendRequests
+                        notificationModal={notificationModal}
+                        setNotificationModal={setNotificationModal}
+                        userId={id}
+                    />
+                    {newNotification ? (
+                        <View>
+                            <Ionicons name="notifications-outline" size={35} color="black" />
+                            <View style={{ width: '30%', height: '25%', borderRadius: 40, backgroundColor: 'red', bottom: '65%', left: '55%' }} />
+                        </View>
+                    ) : (
+                        <Ionicons name="notifications-outline" size={35} color="black" />
+                    )}
                 </TouchableOpacity>
-                <TouchableOpacity style={{ top: '65%', left: '87%',position: 'absolute'}} onPress={() => { setProfileModalVisible(true) }}>
-                    <ProfileModal profileModalVisible={profileModalVisible} setProfileModalVisible={setProfileModalVisible} navigation={navigation} name = {nameValue}/>
+                <TouchableOpacity style={{ top: '65%', left: '87%', position: 'absolute' }} onPress={() => { setProfileModalVisible(true) }}>
+                    <ProfileModal profileModalVisible={profileModalVisible} setProfileModalVisible={setProfileModalVisible} navigation={navigation} name={nameValue} />
                     <Ionicons name="person-circle-outline" size={40} color="black" />
                 </TouchableOpacity>
             </View>
@@ -76,7 +95,7 @@ export default function Home({ navigation }) {
             {/* Main content */}
             <View style={styles.card}>
                 <View style={{ height: '100%' }}>
-                    <TouchableOpacity style={styles.circle} onPress={() => { {!friend ? (setOpenFriendModalValue(true)) : (alert("You already have a friend"))}}}>
+                    <TouchableOpacity style={styles.circle} onPress={() => { !friend ? setOpenFriendModalValue(true) : alert("You already have a friend") }}>
                         <AddFriendModal openFriendModalVisible={openFriendModalValue} setOpenFriendModalVisible={setOpenFriendModalValue} />
                         <Image source={require("../assets/favicon.png")} style={{ alignSelf: 'center', top: '30%' }} />
                     </TouchableOpacity>
@@ -85,7 +104,6 @@ export default function Home({ navigation }) {
                     <ContactFriend object={"chatbox-outline"} method={placeholder} index={3} />
                     <ContactFriend object={"videocam-outline"} method={placeholder} index={2} />
                     <ContactFriend object={"call-outline"} method={placeholder} index={1} />
-
                     {/* Online status indicator */}
                     <OnlineIndicator />
                 </View>
@@ -103,15 +121,17 @@ export default function Home({ navigation }) {
                 <SmallWidget text={"Calendar:"} onPress={placeholder} iconName={"calendar-outline"} />
             </View>
             <View style={{ top: '10%' }}>
-                <Text style={{ textAlign: 'center', top: '10%', color: 'lightgrey', }}>
+                <Text style={{ textAlign: 'center', top: '10%', color: 'lightgrey' }}>
                     This was made by: {''}
                 </Text>
-                <Text style={{ textAlign: 'center', color: 'lightgrey', fontWeight: 'bold', fontStyle: 'italic', }}>
+                <Text style={{ textAlign: 'center', color: 'lightgrey', fontWeight: 'bold', fontStyle: 'italic' }}>
                     Ethan Ieong
                 </Text>
                 <View style={{ flexDirection: 'row', left: '20%' }}>
                     <Text style={{ textAlign: 'center', color: 'lightgrey', fontWeight: 'bold', fontStyle: 'italic', left: '350%' }}>Github: </Text>
-                    <Text style={{ textAlign: 'center', color: 'lightgrey', fontWeight: 'bold', fontStyle: 'italic', left: '350%' }}>https://github.com/etthann/ihateRN</Text>
+                    <Text style={{ textAlign: 'center', color: 'lightgrey', fontWeight: 'bold', fontStyle: 'italic', left: '350%' }}>
+                        https://github.com/etthann/ihateRN
+                    </Text>
                 </View>
             </View>
         </SafeAreaView>
@@ -171,11 +191,25 @@ const styles = StyleSheet.create({
         elevation: 3,
         marginHorizontal: '4%',
     },
-})
+    triangle: {
+        width: 0,
+        height: 0,
+        backgroundColor: "transparent",
+        borderStyle: "solid",
+        borderLeftWidth: 10,
+        borderRightWidth: 10,
+        borderBottomWidth: 30,
+        borderLeftColor: "transparent",
+        borderRightColor: "transparent",
+        borderBottomColor: "white",
+        bottom: '6.9%',
+        left: '61.5%',
+    },
+});
 
 const placeholder = () => {
-    console.log("hi")
-}
+    console.log("hi");
+};
 
 const OnlineIndicator = () => {
     // State for online status
@@ -228,7 +262,6 @@ function ContactFriend({ method, object, bordercolor, index }) {
     );
 }
 
-
 function SmallWidget({ text, onPress, iconName }) {
     return (
         <TouchableOpacity
@@ -243,31 +276,82 @@ function SmallWidget({ text, onPress, iconName }) {
     );
 }
 
-const getData = async (value, setNameValue) => {
-    try {
-        const val = await AsyncStorage.getItem(value);
-        if (val !== null && val !== undefined) {
-            setNameValue(val);
-            console.log("Value retrieved from AsyncStorage:", val);
-        } else {
-            console.log("Value retrieved from AsyncStorage is null or undefined")
-        }
-    } catch (error) {
-        console.log("Error while retrieving value from AsyncStorage:", error);
-    }
-}
 
 
-const friendRequestNotification = async ({id}) => {
-    onValue(ref(db,`users/${id}/incomingRequests`),(snapshot) => {
-        const data = snapshot.val();
-    })
-}
 
-function FriendRequests () {
+function FriendRequests({ notificationModal, setNotificationModal,userId }) {
+
+    const [friendRequests, setFriendRequests] = useState([]);
+    
+    const id = userId;
+
+    useEffect(() => {
+        console.log(id);
+        onValue(ref(db, `users/${id}/outgoingRequests`), (snapshot) => {
+            if (snapshot.exists()) {
+                for (const key in snapshot.val()) {
+                    if (snapshot.val().hasOwnProperty(key)) {
+                        const idFromSnapshot = key; // Access each key
+                        console.log(idFromSnapshot);
+                    }
+                }
+                console.log(friendRequests);
+            } else {
+                console.log("No data available");
+            }
+        }, {});
+    }, []);
+    
+    
+ 
+
+
+
     return (
-        <Modal>
-            
+        <Modal animationType='fade' onRequestClose={() => { setNotificationModal(false) }} visible={notificationModal} transparent={true} statusBarTranslucent={true}>
+            <TouchableOpacity style={{ flex: 1 }} onPress={() => { setNotificationModal(false) }} />
+            <View style={{ ...styles.triangle, backgroundColor: 'transparent', bottom: '87%', left: '76%' }} />
+            <SafeAreaView style={{ height: '30%', width: '60%', backgroundColor: 'white', position: 'absolute', top: '11%', alignSelf: 'flex-end', right: '1%', borderRadius: 20 }}>
+                <Text style={{ textAlign: 'center', fontWeight: 'bold', fontSize: 20 }}>
+                    Friend Requests
+                </Text>
+                <ScrollView>
+
+
+                </ScrollView>
+            </SafeAreaView>
         </Modal>
-    )
+    );
 }
+
+
+
+// function AcceptFriendRequests({ name, profilePicture, onAccept, onDecline }) {
+//     return (
+//         <View>
+//             <SafeAreaView style={{ width: '90%', backgroundColor: 'white', alignSelf: 'center', flexDirection: 'row', marginBottom: '6%', }}>
+//                 <View style={{ ...styles.circle, backgroundColor: 'white', height: '130%', width: '25%' }}>
+//                     <Image source={profilePicture} style={{ alignSelf: 'center', top: '30%' }} />
+//                 </View>
+//                 <Text style={{ left: '20%', top: '5%' }}>
+//                     <Text style={{ fontSize: 20 }}>
+//                         {name}
+//                     </Text>
+//                     {'\n'}sent you a friend request
+//                 </Text>
+//             </SafeAreaView>
+//             <View style={{ flexDirection: 'row', bottom: '2%' }}>
+//                 <Pressable style={{ left: '35%', top: '15%', position: 'absolute', top: '10%', }} onPress={onDecline}>
+//                     <Text style={{ color: 'red' }}>
+//                         Decline
+//                     </Text>
+//                 </Pressable>
+//                 <Pressable style={{ left: '65%', top: '85%', position: 'absolute', }} onPress={onAccept}>
+//                     <Text style={{ color: 'green' }}>
+//                         Accept
+//                     </Text>
+//                 </Pressable>
+//             </View>
+//         </View>
+//     );
+// }

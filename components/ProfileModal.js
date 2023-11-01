@@ -1,18 +1,32 @@
 // Import necessary components and libraries
 import { Modal, View, Text, TouchableOpacity, Image } from "react-native";
 import { Feather } from '@expo/vector-icons';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as ImagePicker from 'expo-image-picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { auth } from "../firebase/firebase";
+import { auth, db } from "../firebase/firebase";
 import { signOut } from "firebase/auth";
-
+import { get, child, ref } from "firebase/database";
 
 // Create the ProfileModal component
 export default function ProfileModal({ profileModalVisible, setProfileModalVisible, navigation, name }) {
     // Initialize state for profile picture
     const [profilePicture, setProfilePicture] = useState("null");
+
+
+    useEffect(() => {
+        // Get the profile picture from the database
+        get(child(ref(db), `users/${auth.currentUser.uid}/profilePicture`)).then((snapshot) => {
+            if (snapshot.exists() && snapshot.val() !== "null") {
+                setProfilePicture(snapshot.val());
+            } else {
+                console.log("No data available");
+            }
+        }).catch((error) => {
+            console.error(error);
+        });
+    }, []);
 
     // Function to pick an image from the device
     const pickImage = async () => {
@@ -22,9 +36,9 @@ export default function ProfileModal({ profileModalVisible, setProfileModalVisib
             allowsEditing: true,
             quality: 1,
         });
-    
+
         // Update the profile picture if an image is selected
-        if (!result.cancelled) {
+        if (!result.canceled) {
             setProfilePicture(result.assets[0].uri);
         }
     }
@@ -66,7 +80,7 @@ export default function ProfileModal({ profileModalVisible, setProfileModalVisib
 }
 
 // Component for rendering profile options
-function ProfileOptions({ icon, text,onPress }) {
+function ProfileOptions({ icon, text, onPress }) {
     return (
         <View style={{ top: '10%', marginBottom: '2%' }}>
             <TouchableOpacity style={{ width: '100%', height: 50 }} onPress={onPress}>

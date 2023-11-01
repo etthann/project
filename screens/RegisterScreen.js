@@ -4,7 +4,6 @@ import { View, Text, StyleSheet, TextInput, Button, KeyboardAvoidingView, Pressa
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import { auth, db } from '../firebase/firebase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Register({ navigation }) {
 
@@ -70,7 +69,7 @@ export default function Register({ navigation }) {
                         <View style={styles.confirmButton}>
                             {/* Confirm button */}
                             {/* When pressed it will call the register function which will make an account or send back an error */}
-                            <Button title="Confirm" onPress={() => register({ name, email, password, password2, navigation, setErrorValue })} />
+                            <Button title="Confirm" onPress={() => register({ name, email, password, password2, phoneNumber, navigation, setErrorValue })} />
                         </View>
                     </View>
                 </TouchableWithoutFeedback>
@@ -127,7 +126,7 @@ const navigateToLogin = ({ navigation }) => {
     navigation.navigate('Login')
 }
 
-const register = async ({ name, email, password, password2, navigation, setErrorValue}) => {
+const register = async ({ name, email, password, password2, navigation, setErrorValue,phoneNumber}) => {
 
     // If the password is the same as the re-entered password
     if (password === password2) {
@@ -139,21 +138,16 @@ const register = async ({ name, email, password, password2, navigation, setError
             const user = userCredential.user;
             // Set the user's name, email and password in the database
             const userId = user.uid;
-            set(ref(db, `users/${userId}`), {
+            await set(ref(db, `users/${userId}`), {
                 name: name,
                 email: email,
                 friendId: "",
                 phoneNumber: phoneNumber,
+                profilePicture: "null",
                 incomingRequests: [],
                 outgoingRequests: [],
                 
             });
-
-            storeData('userId', userId);
-            storeData('name', name);
-            storeData('email', email);
-            storeData('password', password);
-            storeData('friendId', '');
 
             // Navigate home
             navigateToHome(navigation = { navigation });
@@ -176,11 +170,3 @@ const register = async ({ name, email, password, password2, navigation, setError
         setErrorValue(5);
     }
 };
-
-const storeData = async (key,value) => {
-    try {
-        await AsyncStorage.setItem(key, value);
-    } catch (error) {
-        console.log(error);
-    }
-}

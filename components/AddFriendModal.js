@@ -1,35 +1,20 @@
 import { useState, useEffect } from "react";
-import { Modal, View, Text, TextInput, Image, Button, Touchable, TouchableOpacity, Alert } from "react-native";
+import { Modal, View, Text, TextInput, Image, Button, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import GestureRecognizer, { swipeDirections } from 'react-native-swipe-gestures';
 import { onAuthStateChanged } from "firebase/auth";
-import { auth,db } from "../firebase/firebase";
+import { auth, db } from "../firebase/firebase";
 import * as Clipboard from 'expo-clipboard';
-import { child,get, onValue, ref, set, update } from "firebase/database";
+import { onValue, ref, set } from "firebase/database";
 
 
 
-export default function AddFriendModal({ openFriendModalVisible, setOpenFriendModalVisible }) {
+export default function AddFriendModal({ openFriendModalVisible, setOpenFriendModalVisible, setFriendRequests }) {
 
     const [friendCode, setFriendCode] = useState("");
 
     const [id, setId] = useState("null");
 
-
-    const addFriend = () => {
-        onValue(ref(db,`users/${friendCode}`),(snapshot)=> {
-            if (snapshot.exists()) {
-                set(ref(db, `users/${id}/outgoingRequests/${friendCode}`)), {
-                    status: "pending",
-                }
-                set(ref(db, `users/${friendCode}/incomingRequests/${id}`)), {
-                    status: "pending",
-                }
-                Alert.alert("Friend Request Sent");
-            }
-        });
-    }
-    
 
     useEffect(() => {
         onAuthStateChanged(auth, (user) => {
@@ -55,7 +40,10 @@ export default function AddFriendModal({ openFriendModalVisible, setOpenFriendMo
                         <Image source={require("../assets/couple.png")} style={{ resizeMode: 'contain', width: '70%', height: '50%', justifyContent: 'center', alignSelf: 'center' }} />
                         <TextInput value={friendCode} onChangeText={(value) => { setFriendCode(value) }} style={{ width: '80%', height: '8%', alignSelf: 'center', backgroundColor: 'white', borderRadius: 15, top: '60%', textAlign: 'center', position: 'absolute' }} placeholder="Enter Friend's Code" />
                         <View style={{ width: '80%', justifyContent: 'center', alignSelf: 'center', top: '10%', }}>
-                            <Button onPress={addFriend} title="Add Friend" color={"#f194ff"} accessibilityLabel="Click Here to Submit Friend Code" />
+                            <Button onPress={() => {
+                                addFriend({ friendCode, id, setOpenFriendModalVisible });
+                            }} title="Add Friend" color={"#f194ff"} accessibilityLabel="Click Here to Submit Friend Code" />
+
                         </View>
                         <TouchableOpacity onPress={() => { copyToClipboard(id) }} style={{ justifyContent: 'center', textAlign: 'center', alignSelf: 'center', position: 'absolute', top: '78%' }}>
                             <Text>
@@ -79,3 +67,83 @@ const copyToClipboard = async (id) => {
     }
 
 };
+
+const addFriend = ({ friendCode, id, setOpenFriendModalVisible }) => {
+    try {
+        if ((friendCode.trim()) === id) {
+            Alert.alert("Cannot Add Yourself");
+
+        } else if ((friendCode.trim()) === "") {
+            Alert.alert("Please Enter A Friend Code");
+
+        } else {
+            onValue(ref(db, `users/${(friendCode.trim())}`), (snapshot) => {
+                if (snapshot.exists()) {
+                    console.log(snapshot.val());
+                    onValue(ref(db, `users/${(friendCode.trim())}/incomingRequests`), (snapshot) => {
+                        if (snapshot.exists()) {
+                            const incomingRequests = snapshot.val();
+
+                            if (incomingRequests && typeof incomingRequests === 'object') {
+                                // Check if friendCode exists in the incomingRequests
+                                if (incomingRequests[id] === "pending") {
+                                    console.log("Whoops")
+                                } else {
+                                    // Send a friend request
+                                    set(ref(db, `users/${(friendCode.trim())}/incomingRequests`), {
+                                        [id]: "pending"
+                                    });
+                                    Alert.alert("Friend Request Sent");
+                                }
+                            } else {
+                                Alert.alert("Invalid incomingRequests data structure");
+                            }
+                        } else {
+                            set(ref(db, `users/${(friendCode.trim())}/incomingRequests`), {
+                                [id]: "pending"
+                            });
+                            Alert.alert("Friend Request Sent");
+
+                        }
+                    }
+
+                    );
+                }
+            });
+
+            onValue(ref(db, `users/${id}/outgoingRequests`), (snapshot) => {
+                if (snapshot.exists()) {
+                    const outgoingRequests = snapshot.val();
+
+                    if (outgoingRequests && typeof outgoingRequests === 'object') {
+                        // Check if friendCode exists in the outgoingRequests
+                        if (outgoingRequests[(friendCode.trim())] === "pending") {
+                            Alert.alert("Friend Request Already Sent");
+                        } else {
+                            // Send a friend request
+                            set(ref(db, `users/${id}/outgoingRequests`), {
+                                [(friendCode.trim())]: "pending"
+                            });
+                            Alert.alert("Friend Request Sent");
+                        }
+                    } else {
+                        Alert.alert("Invalid outgoingRequests data structure");
+                    }
+                } else {
+                    set(ref(db, `users/${id}/outgoingRequests`), {
+                        [(friendCode.trim())]: "pending"
+                    });
+                    Alert.alert("Friend Request Sent");
+                }
+            }
+
+            );
+        }
+
+        setOpenFriendModalVisible(false);
+    } catch (error) {
+        console.log("Error: " + error);
+    }
+
+
+}
