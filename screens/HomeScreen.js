@@ -8,6 +8,7 @@ import {
     SafeAreaView,
     ScrollView,
     Modal,
+    Pressable,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import NetInfo from '@react-native-community/netinfo';
@@ -15,7 +16,8 @@ import ProfileModal from '../components/ProfileModal';
 import AddFriendModal from '../components/AddFriendModal';
 import { auth, db } from '../firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { onValue, ref, set,get,child } from 'firebase/database';
+import { ref, onValue, get, update, remove, child } from 'firebase/database';
+
 
 export default function Home({ navigation }) {
     // Profile modal
@@ -25,9 +27,10 @@ export default function Home({ navigation }) {
     const [friend, setFriend] = useState(false);
     const [openFriendModalValue, setOpenFriendModalValue] = useState(false);
 
-    // Name and email values
+    // Name and email values0
     const [nameValue, setNameValue] = useState("");
     const [email, setEmail] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
 
     // Notification modal
     const [notificationModal, setNotificationModal] = useState(false);
@@ -35,31 +38,59 @@ export default function Home({ navigation }) {
 
     const [friendRequests, setFriendRequests] = useState([]);
 
-    const [phoneNumber, setPhoneNumber] = useState("");
+
+    const [friendName, setFriendName] = useState("");
+    const [friendProfilePicture, setFriendProfilePicture] = useState("");
+
 
     // User ID
     const [id, setId] = useState("");
-
+    // Friend ID
+    const [friendId, setFriendId] = useState("");
 
     // Get the user's ID
     useEffect(() => {
-        try {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    const uid = user.uid;
-                    setId(uid);
-                    onValue(ref(db, `users/${uid}/friendRequests`), (snapshot) => {
-                        if (snapshot.exists() && snapshot.val() !== "null") {
-                            setPhoneNumber(snapshot.val().phoneNumber);
-                            setNameValue(snapshot.val().name);
-                            setEmail(snapshot.val().email);
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const uid = user.uid;
+                setId(uid);
+                // Now that we have the user's ID, fetch their data
+                const userRef = ref(db, `users/${uid}`);
+                onValue(userRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        // Update your state variables with the user's data
+                        const userData = snapshot.val();
+                        setNameValue(userData.name);
+                        setEmail(userData.email);
+                        setPhoneNumber(userData.phoneNumber);
+                        if (userData.friendId) {
+                            setFriend(true);
+                            setFriendId(userData.friendId);
+                        }
+                    }
+                });
+
+                if (friend) {
+                    onValue(ref(db, `users/${friendId}`), (snapshot) => {
+                        if (snapshot.exists()) {
+                            setFriendName(snapshot.val().name);
+                            setFriendProfilePicture(snapshot.val().profilePicture);
                         }
                     });
                 }
-            });
-        } catch (error) {
-            console.log(error);
-        }}, []);
+            }
+        });
+
+        // Clean up the subscription when the component unmounts
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
+    }, [friend, friendId]);  // Include friend and friendId in the dependency array
+
+
+
 
 
     return (
@@ -75,6 +106,10 @@ export default function Home({ navigation }) {
                         notificationModal={notificationModal}
                         setNotificationModal={setNotificationModal}
                         userId={id}
+                        setFriendRequests={setFriendRequests}
+                        friendRequests={friendRequests}
+                        setFriend={setFriend}
+
                     />
                     {newNotification ? (
                         <View>
@@ -97,7 +132,13 @@ export default function Home({ navigation }) {
                 <View style={{ height: '100%' }}>
                     <TouchableOpacity style={styles.circle} onPress={() => { !friend ? setOpenFriendModalValue(true) : alert("You already have a friend") }}>
                         <AddFriendModal openFriendModalVisible={openFriendModalValue} setOpenFriendModalVisible={setOpenFriendModalValue} />
-                        <Image source={require("../assets/favicon.png")} style={{ alignSelf: 'center', top: '30%' }} />
+                        {friend && friendProfilePicture !== null ? (
+                        <Image source={{ uri: friendProfilePicture }} />
+                        )
+                         : friend && profilePicture == null ? (
+                         <Image source={require("../assets/default_pfp.png")} style={{ alignSelf: 'center', top: '30%' }} />
+                         ): (<Image source={require("../assets/favicon.png")} style={{ alignSelf: 'center', top: '30%' }} />)
+                        }
                     </TouchableOpacity>
                     {/* Contact friends and icons */}
                     <ContactFriend object={"heart"} method={placeholder} bordercolor={"red"} index={4} />
@@ -108,7 +149,7 @@ export default function Home({ navigation }) {
                     <OnlineIndicator />
                 </View>
                 <Text adjustsFontSizeToFit style={{ fontSize: 30, left: '12%', opacity: 0.5, bottom: '30%' }}>
-                    Add Friend
+                    {friendName && friendName.substring(0, 1).toUpperCase() + friendName.substring(1).toLowerCase()}
                 </Text>
             </View>
             <Text style={{ fontSize: 20, color: 'lightgrey', fontWeight: 'bold', alignSelf: 'center', top: '1%' }}>
@@ -117,7 +158,7 @@ export default function Home({ navigation }) {
 
             {/* Small widgets */}
             <View style={{ flexDirection: 'row' }}>
-                <SmallWidget text={"Reminder:"} onPress={placeholder} iconName={"alarm-outline"} />
+                <SmallWidget text={"Reminder:"} onPress={() => {navigation.navigate("Reminder")}} iconName={"alarm-outline"} />
                 <SmallWidget text={"Calendar:"} onPress={placeholder} iconName={"calendar-outline"} />
             </View>
             <View style={{ top: '10%' }}>
@@ -279,79 +320,200 @@ function SmallWidget({ text, onPress, iconName }) {
 
 
 
-function FriendRequests({ notificationModal, setNotificationModal,userId }) {
-
-    const [friendRequests, setFriendRequests] = useState([]);
-    
+function FriendRequests({ notificationModal, setNotificationModal, userId, friendRequests, setFriend, setFriendRequests }) {
     const id = userId;
 
     useEffect(() => {
-        console.log(id);
-        onValue(ref(db, `users/${id}/outgoingRequests`), (snapshot) => {
-            if (snapshot.exists()) {
-                for (const key in snapshot.val()) {
-                    if (snapshot.val().hasOwnProperty(key)) {
-                        const idFromSnapshot = key; // Access each key
-                        console.log(idFromSnapshot);
+        // Function to fetch friend requests when the user logs in
+        const fetchFriendRequests = async () => {
+            const user = auth.currentUser; // Get the current user
+
+            if (user) {
+                // User is logged in, fetch friend requests
+                try {
+                    const snapshot = await get(ref(db, `users/${id}/incomingRequests`));
+                    if (snapshot.exists()) {
+                        const keys = Object.keys(snapshot.val());
+                        var idArray = [];
+                        for (let r = 0; r < keys.length; r++) {
+                            var values = keys[r];
+                            if (idArray.indexOf(values) !== -1) {
+                                console.log("Copy");
+                            } else {
+                                friendRequests[r] = keys[r];
+                            }
+                            idArray.push(values);
+                        }
+                    } else {
+                        console.log("No data available");
                     }
+                } catch (error) {
+                    console.log(error);
                 }
-                console.log(friendRequests);
-            } else {
-                console.log("No data available");
             }
-        }, {});
-    }, []);
-    
-    
- 
+        };
 
+        // Listen for changes in authentication state
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User has logged in, fetch friend requests
+                fetchFriendRequests();
+            }
+        });
 
+        // Cleanup the subscription when the component unmounts
+        return () => {
+            unsubscribe();
+        };
+
+    }, [id, friendRequests]);
 
     return (
+
         <Modal animationType='fade' onRequestClose={() => { setNotificationModal(false) }} visible={notificationModal} transparent={true} statusBarTranslucent={true}>
-            <TouchableOpacity style={{ flex: 1 }} onPress={() => { setNotificationModal(false) }} />
-            <View style={{ ...styles.triangle, backgroundColor: 'transparent', bottom: '87%', left: '76%' }} />
-            <SafeAreaView style={{ height: '30%', width: '60%', backgroundColor: 'white', position: 'absolute', top: '11%', alignSelf: 'flex-end', right: '1%', borderRadius: 20 }}>
+            <TouchableOpacity style={{ backgroundColor: 'transparent', flex: 1 }} onPress={() => { setNotificationModal(false) }} />
+            <View style={{ ...styles.triangle, backgroundColor: 'transparent', bottom: '87%', left: '76%', }} />
+            <View style={{ height: '30%', width: '60%', backgroundColor: 'white', position: 'absolute', top: '11%', alignSelf: 'flex-end', right: '1%', borderRadius: 20, }}>
                 <Text style={{ textAlign: 'center', fontWeight: 'bold', fontSize: 20 }}>
                     Friend Requests
                 </Text>
-                <ScrollView>
-
-
+                <ScrollView style={{ width: '100' }}>
+                    {notificationModal && friendRequests.map((request, index) => {
+                        return (
+                            <PromiseRenderer key={index} userRef={ref(db, `users/${request}`)} id={userId} friendRequests={friendRequests} setFriend={setFriend} setFriendRequests={setFriendRequests} setNotificationModal={setNotificationModal} />
+                        );
+                    })}
                 </ScrollView>
-            </SafeAreaView>
+            </View>
+
         </Modal>
-    );
+    )
 }
 
 
 
-// function AcceptFriendRequests({ name, profilePicture, onAccept, onDecline }) {
-//     return (
-//         <View>
-//             <SafeAreaView style={{ width: '90%', backgroundColor: 'white', alignSelf: 'center', flexDirection: 'row', marginBottom: '6%', }}>
-//                 <View style={{ ...styles.circle, backgroundColor: 'white', height: '130%', width: '25%' }}>
-//                     <Image source={profilePicture} style={{ alignSelf: 'center', top: '30%' }} />
-//                 </View>
-//                 <Text style={{ left: '20%', top: '5%' }}>
-//                     <Text style={{ fontSize: 20 }}>
-//                         {name}
-//                     </Text>
-//                     {'\n'}sent you a friend request
-//                 </Text>
-//             </SafeAreaView>
-//             <View style={{ flexDirection: 'row', bottom: '2%' }}>
-//                 <Pressable style={{ left: '35%', top: '15%', position: 'absolute', top: '10%', }} onPress={onDecline}>
-//                     <Text style={{ color: 'red' }}>
-//                         Decline
-//                     </Text>
-//                 </Pressable>
-//                 <Pressable style={{ left: '65%', top: '85%', position: 'absolute', }} onPress={onAccept}>
-//                     <Text style={{ color: 'green' }}>
-//                         Accept
-//                     </Text>
-//                 </Pressable>
-//             </View>
-//         </View>
-//     );
-// }
+function AcceptFriendRequests({ name, profilePicture, friendIdValue, id, friendRequests, setFriend, setNotificationModal, setFriendRequests }) {
+
+    const Decision = ({ decision }) => {
+        const userRef = ref(db, `users/${id}`);
+        const requestRef = ref(db, `users/${friendIdValue}`);
+
+
+        if (decision === "Decline") {
+            // Remove friend request entries
+            Promise.all([
+                remove(userRef.child(`incomingRequests/${friendIdValue}`)),
+                remove(requestRef.child(`outgoingRequests/${id}`)),
+            ])
+                .then(() => {
+                    console.log("Friend request declined and removed.");
+                })
+                .catch((error) => {
+                    console.error("Error removing requests:", error);
+                });
+        } else {
+            // Accept friend request
+            const userIncomingRequestsRef = child(userRef, `incomingRequests/${friendIdValue}`);
+            const friendOutgoingRequestsRef = child(requestRef, `outgoingRequests/${id}`);
+            setFriend(true);
+
+            // Update user data and incoming requests status
+            Promise.all([
+                update(userRef, { friendId: friendIdValue }),
+                update(userIncomingRequestsRef, { status: "Accepted" }),
+            ])
+                .then(() => {
+
+                    return Promise.all([
+                        update(requestRef, { friendId: id }),
+                        update(friendOutgoingRequestsRef, { status: "Accepted" }),
+                    ]);
+                })
+                .catch((error) => {
+                    console.error("Error accepting friend request:", error);
+                });
+        }
+        setNotificationModal(false)
+        setFriendRequests(friendRequests.filter(requestId => requestId !== friendIdValue));
+    };
+
+
+    useEffect(() => {
+        // Update filteredFriendRequests when friendRequests changes
+        setFriendRequests(friendRequests);
+
+    }, [friendRequests]);
+
+    return (
+        <View style={{ marginBottom: '10%', borderWidth: 0.3, height: '100%', borderColor: 'pink' }}>
+            <View style={{ top: 0, backgroundColor: 'white', width: '100%', }}>
+                <SafeAreaView style={{ width: '90%', backgroundColor: 'white', alignSelf: 'center', flexDirection: 'row', marginBottom: '6%', }}>
+                    <View style={{ ...styles.circle, backgroundColor: 'white', height: '130%', width: '25%' }}>
+                        {profilePicture != 'null' ? (
+                            <Image source={profilePicture} style={{ alignSelf: 'center', top: '30%', resizeMode: 'contain' }} />
+                        ) : (<Image source={'assets/placeholderLogo.png'} style={{ alignSelf: 'center', resizeMode: 'contain', top: '30%' }} />)}
+                    </View>
+                    <Text style={{ left: '20%', top: '5%' }}>
+                        <Text style={{ fontSize: 20 }}>
+                            {name}
+                        </Text>
+                        {'\n'}sent you a friend request
+                    </Text>
+                </SafeAreaView>
+                <View style={{ flexDirection: 'row', bottom: '1%' }}>
+                    <Pressable style={{ left: '35%', position: 'absolute', top: '10%' }} onPress={() => Decision("Decline")}>
+                        <Text style={{ color: 'red' }}>
+                            Decline
+                        </Text>
+                    </Pressable>
+                    <Pressable style={{ left: '65%', top: '86%', position: 'absolute', }} onPress={() => Decision("Accept")}>
+                        <Text style={{ color: 'green' }}>
+                            Accept
+                        </Text>
+                    </Pressable>
+                </View>
+            </View>
+        </View>
+    );
+}
+
+
+function PromiseRenderer({ userRef, id, friendRequests, setFriend, setNotificationModal, setFriendRequests }) {
+    const [userData, setUserData] = useState(null);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    setUserData(snapshot.val());
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchData();
+    }, [userRef]);
+
+    if (userData) {
+        return (
+            <>
+                {friendRequests.includes(userData.id) && (
+                    <AcceptFriendRequests
+                        name={userData.name}
+                        profilePicture={userData.profilePicture}
+                        friendIdValue={userData.id}
+                        id={id}
+                        friendRequests={friendRequests}
+                        setFriend={setFriend}
+                        setNotificationModal={setNotificationModal}
+                        setFriendRequests={setFriendRequests}
+                    />
+                )}
+            </>
+        );
+    } else {
+        return null; // You can render a loading indicator or handle the absence of data as needed
+    }
+}

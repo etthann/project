@@ -32,6 +32,8 @@ export default function Login({ navigation }) {
                 setErrorValue(3); // Change the error code for wrong password
             } else if (errorCode === 'auth/too-many-requests') {
                 setErrorValue(4); // Change the error code for too many requests
+            } else if (errorCode === 'auth/invalid-login-credentials') {
+                setErrorValue(2)
             }
         }
     };
@@ -77,7 +79,7 @@ export default function Login({ navigation }) {
                     Don't have an account?
                 </Text>
                 {/* Navigate to the register screen */}
-                <TouchableOpacity onPress={() => { navigateToRegister(navigation = { navigation }) }}>
+                <TouchableOpacity onPress={() => { navigateToRegister({navigation}) }}>
                     <Text style={{ color: '#AD40AF', fontStyle: 'italic', fontWeight: 'bold', textDecorationLine: 'underline' }}>
                         Register
                     </Text>

@@ -144,9 +144,8 @@ const register = async ({ name, email, password, password2, navigation, setError
                 friendId: "",
                 phoneNumber: phoneNumber,
                 profilePicture: "null",
-                incomingRequests: [],
-                outgoingRequests: [],
-                
+                id: userId,
+
             });
 
             // Navigate home
