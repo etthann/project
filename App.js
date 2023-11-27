@@ -5,6 +5,7 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
 import ReminderScreen from './screens/ReminderScreen';
+import EmojiScreen from './screens/EmojiScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -13,8 +14,9 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen name="Reminder" component={ReminderScreen} options={{ headerShown: false, headerLeft: () => { null } }} />
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false, headerLeft: () => null }} />
+        <Stack.Screen name="Emoji" component={EmojiScreen} options={{ headerShown: false, headerLeft: () => null }} />
+        <Stack.Screen name="Reminder" component={ReminderScreen} options={{ headerShown: false, headerLeft: () => { null } }} />
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false, headerLeft: () => null }} />
         <Stack.Screen name="Register" component={RegisterScreen} />
       </Stack.Navigator>

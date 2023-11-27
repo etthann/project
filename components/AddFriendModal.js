@@ -37,7 +37,7 @@ export default function AddFriendModal({ openFriendModalVisible, setOpenFriendMo
                         <Text style={{ textAlign: 'center', fontSize: 50, top: '3%' }}>
                             Add Friend
                         </Text>
-                        <Image source={require("../assets/couple.png")} style={{ resizeMode: 'contain', width: '70%', height: '50%', justifyContent: 'center', alignSelf: 'center' }} />
+                        <Image source={require("../assets/random/couple.png")} style={{ resizeMode: 'contain', width: '70%', height: '50%', justifyContent: 'center', alignSelf: 'center' }} />
                         <TextInput value={friendCode} onChangeText={(value) => { setFriendCode(value) }} style={{ width: '80%', height: '8%', alignSelf: 'center', backgroundColor: 'white', borderRadius: 15, top: '60%', textAlign: 'center', position: 'absolute' }} placeholder="Enter Friend's Code" />
                         <View style={{ width: '80%', justifyContent: 'center', alignSelf: 'center', top: '10%', }}>
                             <Button onPress={() => {

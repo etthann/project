@@ -21,10 +21,6 @@ export default function Register({ navigation }) {
     const [errorValue, setErrorValue] = useState(0);
     const errorRegisterMessages = ["true", "Invalid email, please enter a valid email.", "Please enter a password longer than 6 characters.", password === '' ? "Please enter a valid email/password" : "An error has occured please try again", "Passwords do not match."]
 
-    //Value of the phone number
-    const [phoneNumber, setPhoneNumber] = useState('');
-
-
     return (
         //to avoid the notch on the phones and round edges
         <SafeAreaView style={{ flex: 1 }}>
@@ -60,7 +56,6 @@ export default function Register({ navigation }) {
                         {/* Prompt and input containers */}
                         <RegisterCredentialContainer value={name} setValue={setName} text={0} secureText={false} />
                         <RegisterCredentialContainer value={email} setValue={setEmail} text={1} secureText={false} />
-                        <RegisterCredentialContainer value={phoneNumber} setValue={setPhoneNumber} text={2} secureText={false} />
                         <RegisterCredentialContainer value={password} setValue={setPassword} text={3} secureText={true} />
                         <RegisterCredentialContainer value={password2} setValue={setPassword2} text={4} secureText={true} />
 
@@ -69,7 +64,7 @@ export default function Register({ navigation }) {
                         <View style={styles.confirmButton}>
                             {/* Confirm button */}
                             {/* When pressed it will call the register function which will make an account or send back an error */}
-                            <Button title="Confirm" onPress={() => register({ name, email, password, password2, phoneNumber, navigation, setErrorValue })} />
+                            <Button title="Confirm" onPress={() => register({ name, email, password, password2, navigation, setErrorValue })} />
                         </View>
                     </View>
                 </TouchableWithoutFeedback>
@@ -126,7 +121,7 @@ const navigateToLogin = ({ navigation }) => {
     navigation.navigate('Login')
 }
 
-const register = async ({ name, email, password, password2, navigation, setErrorValue,phoneNumber}) => {
+const register = async ({ name, email, password, password2, navigation, setErrorValue}) => {
 
     // If the password is the same as the re-entered password
     if (password === password2) {
@@ -142,7 +137,6 @@ const register = async ({ name, email, password, password2, navigation, setError
                 name: name,
                 email: email,
                 friendId: "",
-                phoneNumber: phoneNumber,
                 profilePicture: "null",
                 id: userId,
 

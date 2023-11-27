@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/firebase';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
 export default function Login({ navigation }) {
 
@@ -43,24 +44,24 @@ export default function Login({ navigation }) {
         //to avoid the notch on the phones and round edges
         <SafeAreaView style={{ flex: 1,backgroundColor:'white' }}>
             {/* The logo and text */}
-            <View style={{ width: '60%', height: '30%', left: '22%', top: '4%', bottom: '10%' }}>
+            <View style={{ width: wp('60%'), height: hp('30%'), left: wp('22%'), top: hp('4%'), bottom: hp('10%') }}>
                 <Image
-                    style={{ width: '100%', height: '80%', resizeMode: 'contain' }}
+                    style={{ alignSelf: 'center', height: hp('25%'), resizeMode: 'contain' }}
                     source={
-                        require('../assets/placeholderLogo.png')
+                        require('../assets/peach_and_gomu/heart.png')
                     } />
-                <Text adjustsFontSizeToFit style={{ fontSize: 25, fontWeight: 'bold', textAlign: 'center', color: 'red' }}>Placeholder Logo</Text>
-                <Text adjustsFontSizeToFit style={{ textAlign: 'center', top: '6%', fontWeight: 'bold', right: '7' }}>Account Login</Text>
+                <Text adjustsFontSizeToFit style={{ fontSize: wp('7%'), fontWeight: 'bold', left: wp('3%'), textAlign: 'center', color: 'red' }}>LoveLink ❤️</Text>
+                <Text adjustsFontSizeToFit style={{ textAlign: 'center', top: hp('2%'), fontWeight: 'bold' }}>Account Login</Text>
             </View>
 
             {/* Allow user to enter email  */}
             <View style={styles.loginCredentialContainer}>
-                <Ionicons adjustsFontSizeToFit name="mail" color="#3b444b" size={20} style={{ right: '2%' }} />
+                <Ionicons adjustsFontSizeToFit name="mail" color="#3b444b" size={wp('5%')}/>
                 <UserInput placeholder={1} value={email} setValue={setEmail} secureText={false} />
             </View>
             {/* Allow user to enter password */}
             <View style={styles.loginCredentialContainer}>
-                <Ionicons adjustsFontSizeToFit name="lock-closed" color="#3b444b" size={20} style={{ right: '2%' }} />
+                <Ionicons adjustsFontSizeToFit name="lock-closed" color="#3b444b" size={wp('5%')} />
                 <UserInput placeholder={2} value={password} setValue={setPassword} secureText={true} />
             </View>
             {/* Login Button */}
@@ -74,7 +75,7 @@ export default function Login({ navigation }) {
                 ) : null}
             </View>
             {/* Allow user to register */}
-            <View style={{ flexDirection: 'row', justifyContent: 'center', top: '25%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', top: hp('10%') }}>
                 <Text>
                     Don't have an account?
                 </Text>
@@ -85,67 +86,41 @@ export default function Login({ navigation }) {
                     </Text>
                 </TouchableOpacity>
             </View>
-            <View style={{ flexDirection: 'row' }}>
-                {/* Allow users to sign in with Apple */}
-                <View style={styles.socialMediaSignIn}>
-                    <Image style={{ width: '100%', height: '100%', resizeMode: 'contain' }} source={require('../assets/apple.png')} />
-                </View>
-                {/* Allow users to sign in with Google */}
-                <View style={styles.socialMediaSignIn}>
-                    <Image style={{ width: '100%', height: '100%', resizeMode: 'contain' }} source={require('../assets/google.png')} />
-                </View>
-                {/* Allow users to sign in with Meta */}
-                <View style={styles.socialMediaSignIn}>
-                    <Image style={{ width: '100%', height: '100%', resizeMode: 'contain' }} source={require('../assets/meta.png')} />
-                </View>
-            </View>
         </SafeAreaView>
     );
-}
-
+};
 
 const styles = StyleSheet.create({
     loginCredentialContainer: {
         backgroundColor: 'white',
-        width: '80%',
+        width: wp('80%'),
         borderColor: '#e8e8e8',
-        borderWidth: 1,
-        borderRadius: 5,
-        top: '15%',
-        left: '7%',
-        padding: '2%',
-        paddingHorizontal: 3,
+        borderWidth: wp('0.5%'),
+        borderRadius: wp('5%'),
+        top: hp('9%'),
+        left: wp('10%'),
+        padding: wp('1.5%'),
+        paddingHorizontal: wp('2%'),
         flexDirection: 'row',
         alignItems: 'center',
-        marginVertical: '1%',
+        marginVertical: hp('1%'),
     }, loginButton: {
         resizeMode: 'contain',
-        borderRadius: 1,
-        width: '80%',
-        height: '5%',
-        top: '8%',
+        width: wp('80%'),
+        height: hp('5%'),
+        top: hp('6%'),
         backgroundColor: '#ADD8E6',
-        marginVertical: '7%',
-        marginHorizontal: '12%',
+        marginVertical: hp('4%'),
+        alignSelf: 'center'
     }, errorMessage: {
-        fontSize: 12,
-        marginTop: '1%',
-        marginHorizontal: '1%',
+        fontSize: wp('3%'),
+        marginTop: hp('1%'),
+        marginHorizontal: wp('1%'),
         color: 'red',
         fontWeight: 'bold',
         textAlign: 'center'
-    }, socialMediaSignIn: {
-        borderColor: '#D3D3D3',
-        width: '13%',
-        height: '20%',
-        borderRadius: 4,
-        borderWidth: 1,
-        marginVertical: '8%',
-        marginHorizontal: '11%',
-        top: '25%',
     },
-})
-
+});
 
 const navigateToHome = ({ navigation, userId }) => {
     //Navigate to the home screen
@@ -155,13 +130,10 @@ const navigateToHome = ({ navigation, userId }) => {
 const navigateToRegister = ({ navigation }) => {
     //Navigate to the register screen
     navigation.navigate('Register');
-}
-
-
-
+};
 
 function UserInput({ placeholder, value, setValue, secureText }) {
-    const placeholderValue = placeholder === 1 ? 'E-mail' : 'Password';
+    const placeholderValue = placeholder === 1 ? ' E-mail' : 'Password';
 
     return (
         <TextInput
@@ -171,4 +143,4 @@ function UserInput({ placeholder, value, setValue, secureText }) {
             secureTextEntry={secureText}
         />
     );
-}
+};

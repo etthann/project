@@ -142,3 +142,35 @@ docs/pages/versions/*/react-native/*.diff
 
 # Pods
 /ios/Pods
+
+/screens/eas.json
+eas-build-info.json
+eas-build-cache
+eas-build-artifacts
+eas-source-credentials.json
+eas-source-credentials-*
+eas-build-credentials.json
+eas-build-credentials-*
+eas-cli-auth.json
+eas-cli-auth-*
+eas-cli-credentials.json
+eas-cli-credentials-*
+eas-cli-credentials-*.json
+eas-cli-credentials-*.json.enc
+eas-cli-credentials-*.json.enc.*
+eas-cli-credentials-*.json.enc.**
+eas-cli-credentials-*.json.enc.***
+eas-cli-credentials-*.json.enc.****
+eas-cli-credentials-*.json.enc.*****
+eas-cli-credentials-*.json.enc.******
+eas-cli-credentials-*.json.enc.*******
+eas-cli-credentials-*.json.enc.********
+eas-cli-credentials-*.json.enc.*********
+eas-cli-credentials-*.json.enc.**********
+eas-cli-credentials-*.json.enc.***********
+eas-cli-credentials-*.json.enc.************
+eas-cli-credentials-*.json.enc.*************
+eas-cli-credentials-*.json.enc.**************
+
+%ProgramData%
+eas.json
