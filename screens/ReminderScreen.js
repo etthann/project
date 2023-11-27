@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { TouchableOpacity, View, Text, ScrollView, TextInput, StyleSheet, Platform } from "react-native";
-import { onAuthStateChanged } from "firebase/auth";
+import { TouchableOpacity, View, Text, ScrollView, TextInput, Platform, StyleSheet } from "react-native";
 import { auth, db } from "../firebase/firebase";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { onValue, set, ref, push } from "firebase/database";
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import PushNotification from 'react-native-push-notification';
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from '@expo/vector-icons';
 import { Alert } from "react-native";
+import * as Notifications from 'expo-notifications';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
-export default function Reminder({navigation}) {
+
+
+export default function Reminder({ navigation }) {
     const [date, setDate] = useState(new Date());
     const [time, setTime] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -21,6 +22,17 @@ export default function Reminder({navigation}) {
     useEffect(() => {
         setUID(auth.currentUser.uid);
         retrieveRemindersFromFirebase(); // Fetch reminders on component mount
+    }, []);
+
+    useEffect(() => {
+        // Set the handler function to be called when a notification is received
+        Notifications.setNotificationHandler({
+            handleNotification: async () => ({
+                shouldShowAlert: true,
+                shouldPlaySound: true,
+                shouldSetBadge: false,
+            }),
+        });
     }, []);
 
     const chooseDate = () => {
@@ -53,13 +65,31 @@ export default function Reminder({navigation}) {
             time: `${time.getHours()}:${time.getMinutes()} ${am_pm()}`
         };
 
-        set(newReminderRef, newReminder);
+        const currentTime = new Date();
 
-        // Update the state to include the new reminder
-        setReminders([...reminders, newReminder]);
+        // Check if the selected time has already passed
+        if (new Date(newReminder.date + ' ' + newReminder.time) < currentTime) {
+            Alert.alert('Invalid Time', 'The selected time has already passed.');
+        } else {
+            // Check for existing reminders with the same date and time
+            const duplicateReminder = reminders.find(
+                (reminder) => reminder.date === newReminder.date && reminder.time === newReminder.time
+            );
 
-        // Schedule a notification for the reminder time
-        scheduleNotification(newReminder);
+            if (duplicateReminder) {
+                // Handle the case when a reminder with the same date and time already exists
+                Alert.alert('Duplicate Reminder', 'A reminder with the same date and time already exists.');
+            } else {
+                // Update the state to include the new reminder
+                setReminders([...reminders, newReminder]);
+
+                // Schedule a notification for the reminder time
+                scheduleNotification(newReminder);
+
+                // Store the new reminder in Firebase
+                set(newReminderRef, newReminder);
+            }
+        }
     };
 
     const scheduleNotification = (reminder) => {
@@ -71,9 +101,14 @@ export default function Reminder({navigation}) {
 
         if (timeDiff > 0) {
             // Schedule a notification
-            PushNotification.localNotificationSchedule({
-                message: `Reminder: ${reminder.descriptionText}`,
-                date: new Date(Date.now() + timeDiff),
+            Notifications.scheduleNotificationAsync({
+                content: {
+                    title: 'Reminder',
+                    body: `Reminder: ${reminder.descriptionText}`,
+                },
+                trigger: {
+                    seconds: timeDiff / 1000,
+                },
             });
         } else {
             // The reminder time has already passed
@@ -102,91 +137,55 @@ export default function Reminder({navigation}) {
 
     return (
         <View style={{ flex: 1 }}>
-            {/* Header */}
-            <View style={{ width: '100%', height: '15%', backgroundColor: 'white', borderBottomEndRadius: 30, borderBottomStartRadius: 30 }}>
-                <TouchableOpacity style={{ marginTop: 30, marginLeft: 20, width: '8%', borderRadius: 100, }} onPress={() => navigation.navigate("Home")}>
-                    <Ionicons name="arrow-back" size={35} color="black"/>
-                </TouchableOpacity>
-                <Text style={{ textAlign: 'center', fontSize: 30, fontWeight: 'bold', bottom: '39%' }}>
-                    Reminder
-                </Text>
-            </View>
             {/* Body */}
             <ScrollView>
                 <View>
-                    <Text style={{ fontSize: 20, fontWeight: 'bold', marginLeft: 20, marginTop: 20 }}>
-                        Current Reminders:
+                    <Text style={{ fontSize: wp('8%'), fontWeight: 'bold', textAlign: 'center', marginTop: hp('3%') }}>
+                        Current Reminders
                     </Text>
-                    <ScrollView style={{ width: '90%', height: 200, backgroundColor: 'white', borderRadius: 20, marginLeft: 20, marginTop: 20 }}>
+                    <ScrollView style={{ width: '90%', height: hp('35%'), backgroundColor: 'white', borderRadius: hp('2%'), marginLeft: hp('3%'), marginTop: hp('2%') }}>
                         {reminders.map((reminder, index) => (
-                            <View key={index} style = {{backgroundColor: 'pink', borderWidth: 1,borderRadius: 15, marginVertical: 5}}>
-                                <Text style={{ fontSize: 15, fontWeight: 'bold', marginLeft: 20, marginTop: 20 }}>
+                            <View key={index} style={{ backgroundColor: 'pink', borderWidth: hp('0.2%'), borderRadius: hp('2%'), marginVertical: wp('1.5%') }}>
+                                <Text style={styles.text}>
                                     Description: {reminder.descriptionText}
                                 </Text>
-                                <Text style={{ fontSize: 15, fontWeight: 'bold', marginLeft: 20, marginTop: 20 }}>
+                                <Text style={styles.text}>
                                     Date: {reminder.date}
                                 </Text>
-                                <Text style={{ fontSize: 15, fontWeight: 'bold', marginLeft: 20, marginTop: 20 }}>
+                                <Text style={styles.text}>
                                     Time: {reminder.time}
                                 </Text>
                             </View>
                         ))}
                     </ScrollView>
                 </View>
-                <View style={{ marginTop: '5%' }}>
-                    <Text style={{ fontSize: 20, fontWeight: 'bold', marginLeft: 20, marginTop: 20 }}>
-                        Add Reminders:
+                <View style={{ marginTop: wp('5%') }}>
+                    <Text style={{ fontSize: wp('8%'), fontWeight: 'bold', textAlign: 'center', marginTop: hp('3%') }}>
+                        Add Reminders
                     </Text>
-                    <ScrollView style={{
-                        width: '90%', height: 170, backgroundColor: 'white', borderRadius: 20, marginLeft: 20, marginTop: 20
-                    }}>
+                    <ScrollView style={{ width: '90%', height: hp('27%'), backgroundColor: 'white', borderRadius: hp('2%'), marginLeft: hp('3%'), marginTop: hp('2%') }}>
 
-                        <TextInput value={description} onChangeText={(textValue) => { setDescription(textValue) }} style={{ marginLeft: 20, marginTop: 20, fontSize: 15, fontWeight: 'bold', width: '80%' }} placeholder="Enter Reminder" />
-                        <View style={{ flexDirection: 'row', marginTop: 20, marginLeft: 20 }}>
-                            <Text style={{ fontSize: 15, fontWeight: 'bold' }}>Date: </Text>
-                            <TouchableOpacity
-                                style={{
-                                    backgroundColor: 'white',
-                                    width: '80%',
-                                    left: '30%',
-                                    borderRadius: 10,
-                                    borderWidth: 1,
-                                }}
-                                onPress={chooseDate}
-                            >
+
+                        <TextInput value={description} onChangeText={(textValue) => { setDescription(textValue) }} style={{ marginLeft: wp('4.5%'), fontSize: wp('4%'), fontWeight: 'bold', width: wp('80%'),height: hp('10%') }} placeholder="Enter Reminder" />
+                        <View style={{ flexDirection: 'row', marginTop: wp('2.5%'), marginLeft: wp('4.5%') }}>
+                            <Text style={{ fontSize: wp('5%'), fontWeight: 'bold' }}>Date: </Text>
+                            <TouchableOpacity style={styles.dateTimeInput} onPress={chooseDate}>
                                 <Text style={{ textAlign: 'center' }}>{date.getMonth() + 1}/{date.getDate()}/{date.getFullYear()}</Text>
                             </TouchableOpacity>
                         </View>
                         {showDatePicker && (
-                            <DateTimePicker
-                                mode="date"
-                                value={date}
-                                onChange={handleDateChange}
-                            />
+                            <DateTimePicker mode="date" value={date} onChange={handleDateChange}/>
                         )}
-                        <View style={{ flexDirection: 'row', marginTop: 20, marginLeft: 20 }}>
-                            <Text style={{ fontSize: 15, fontWeight: 'bold' }}>Time: </Text>
-                            <TouchableOpacity
-                                style={{
-                                    backgroundColor: 'white',
-                                    width: '80%',
-                                    left: '30%',
-                                    borderRadius: 10,
-                                    borderWidth: 1,
-                                }}
-                                onPress={chooseTime}
-                            >
+                        <View style={{ flexDirection: 'row', marginLeft: wp('4.5%'), marginTop: wp('3%') }}>
+                            <Text style={{ fontSize: wp('5%'), fontWeight: 'bold' }}>Time: </Text>
+                            <TouchableOpacity style={styles.dateTimeInput} onPress={chooseTime}>
                                 <Text style={{ textAlign: 'center' }}>{time.getHours()}:{minutes()} {am_pm()}</Text>
                             </TouchableOpacity>
                         </View>
                         {showTimePicker && (
-                            <DateTimePicker
-                                mode="time"
-                                value={time}
-                                onChange={handleTimeChange}
-                            />
+                            <DateTimePicker mode="time" value={time} onChange={handleTimeChange}/>
                         )}
-                        <TouchableOpacity onPress={() => { storeReminder() }} style={{ backgroundColor: '#841584', padding: 10, borderRadius: 5, marginVertical: 15 }}>
+                        <TouchableOpacity onPress={() => { storeReminder() }} style={{ backgroundColor: '#841584', padding: wp('3%'), borderRadius: wp('2%'), marginVertical: wp('7%') }}>
                             <Text style={{ color: 'white', textAlign: 'center' }}>Create</Text>
                         </TouchableOpacity>
                     </ScrollView>
@@ -195,3 +194,15 @@ export default function Reminder({navigation}) {
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    text: {
+        fontSize: hp('2%'), fontWeight: 'bold', marginLeft: wp('3%'), marginTop: wp('4%')
+    }, dateTimeInput: {
+        backgroundColor: 'white',
+        width: wp('70%'),
+        left: wp('1%'),
+        borderRadius: wp('2%'),
+        borderWidth: wp('0.5%'),
+    }
+})

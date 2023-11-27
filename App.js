@@ -15,8 +15,8 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false, headerLeft: () => null }} />
-        <Stack.Screen name="Emoji" component={EmojiScreen} options={{ headerShown: false, headerLeft: () => null }} />
-        <Stack.Screen name="Reminder" component={ReminderScreen} options={{ headerShown: false, headerLeft: () => { null } }} />
+        <Stack.Screen name="Emoji" component={EmojiScreen}/>
+        <Stack.Screen name="Reminder" component={ReminderScreen}/>
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false, headerLeft: () => null }} />
         <Stack.Screen name="Register" component={RegisterScreen} />
       </Stack.Navigator>

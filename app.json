@@ -50,7 +50,8 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_CALENDAR",
         "android.permission.WRITE_CALENDAR"
-      ]
+      ],
+      "package": "com.ethanieong.IHATERN"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -59,6 +60,13 @@
       "eas": {
         "projectId": "7d18c911-f4a7-418c-bd0d-8b7221941d86"
       }
+    },
+    "owner": "ethanieong",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7d18c911-f4a7-418c-bd0d-8b7221941d86"
     }
   }
 }

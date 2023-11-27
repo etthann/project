@@ -1,9 +1,10 @@
-import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, KeyboardAvoidingView, Pressable, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Button, KeyboardAvoidingView, Pressable, TouchableWithoutFeedback, Keyboard,Image } from 'react-native';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import { auth, db } from '../firebase/firebase';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 
 export default function Register({ navigation }) {
 
@@ -23,14 +24,14 @@ export default function Register({ navigation }) {
 
     return (
         //to avoid the notch on the phones and round edges
-        <SafeAreaView style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
             {/* When typing avoid the keyboard from blocking the phone */}
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? "padding" : "height"} style={{ flex: 1 }}>
                 {/* Don't touch the keyboard and the keyboard will go down */}
                 <TouchableWithoutFeedback onPress={() => Keyboard.dismiss}>
-                    <View>
+                    <View style = {{justifyContent: 'center', alignContent: 'center'}}>
                         {/* Create account text */}
-                        <Text style={{ textAlign: 'center', width: '100%', fontWeight: 'bold', color: 'black', fontSize: 40, }}>
+                        <Text style={{ textAlign: 'center', width: '100%', fontWeight: 'bold', color: 'black', fontSize: wp('10%'),marginVertical: hp('2%') }}>
                             Create Account
                         </Text>
 
@@ -66,56 +67,52 @@ export default function Register({ navigation }) {
                             {/* When pressed it will call the register function which will make an account or send back an error */}
                             <Button title="Confirm" onPress={() => register({ name, email, password, password2, navigation, setErrorValue })} />
                         </View>
+                        <Image source = {require("../assets/peach_and_gomu/hug.gif")} style = {{width: '100%',height: hp('20%'),resizeMode: 'contain',alignSelf:'flex-end',left: hp('10%'),top: hp('2%')}}/>
                     </View>
                 </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
-        </SafeAreaView >
+        </View >
     );
 }
 
 const styles = StyleSheet.create({
     textInput: {
         borderColor: '#000000',
-        borderRadius: 10,
-        borderWidth: 1,
-        width: '80%',
+        borderRadius: hp('1%'),
+        borderWidth: wp('0.4%'),
+        width: wp('80%'),
         backgroundColor: '#FFFFFF',
-        marginVertical: 9,
+        marginVertical: hp('1%'),
         alignSelf: 'center',
-        padding: 7,
+        padding: hp('1%'),
     }, confirmButton: {
-        width: '80%',
+        width: wp('80%'),
         alignSelf: 'center',
-        marginVertical: 10,
+        marginVertical: hp('2%'),
     }, error: {
         color: 'red',
         alignSelf: 'center',
-        marginVertical: 10,
+        marginVertical: hp('1%'),
     }
 })
-
-
 
 function RegisterCredentialContainer({ value, setValue, text, secureText }) {
     const promptText = ["Name", "Email", "Phone", "Password", "Re-Enter Password"];
 
     return (
         <View>
-            <Text style={{ fontSize: 15, left: '10%' }}>{promptText[text]}</Text>
+            <Text style={{ fontSize: wp('4%'), left: wp('10%') }}>{promptText[text]}</Text>
             <TextInput placeholder={`${promptText[text]}:`} onChangeText={(input) => (setValue(input))} value={value} style={styles.textInput} secureTextEntry={secureText} />
             
         </View>
     );
 }
 
-
-
-
-
 const navigateToHome = ({ navigation}) => {
     //Navigate Home
     navigation.navigate('Home');
 }
+
 const navigateToLogin = ({ navigation }) => {
     //Navigate to the login page
     navigation.navigate('Login')

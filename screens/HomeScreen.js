@@ -11,46 +11,33 @@ import {
     Pressable,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import NetInfo from '@react-native-community/netinfo';
 import ProfileModal from '../components/ProfileModal';
 import AddFriendModal from '../components/AddFriendModal';
 import { auth, db } from '../firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { ref, onValue, get, update, remove, child } from 'firebase/database';
-import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 
 
 export default function Home({ navigation }) {
-    // Profile modal
     const [profileModalVisible, setProfileModalVisible] = useState(false);
-
-    // Friend modal
     const [friend, setFriend] = useState(false);
     const [openFriendModalValue, setOpenFriendModalValue] = useState(false);
-
-    // Name and email values0
-    const [nameValue, setNameValue] = useState("");
-    const [email, setEmail] = useState("");
-    const [phoneNumber, setPhoneNumber] = useState("");
-
-    // Notification modal
+    const [nameValue, setNameValue] = useState('');
     const [notificationModal, setNotificationModal] = useState(false);
     const [newNotification, setNewNotification] = useState(false);
-
     const [friendRequests, setFriendRequests] = useState([]);
-
-    const [friendName, setFriendName] = useState("");
-    const [friendProfilePicture, setFriendProfilePicture] = useState("");
-
-    const [emojiRecieved, setEmojiRecieved] = useState("");
+    const [friendName, setFriendName] = useState('');
+    const [friendProfilePicture, setFriendProfilePicture] = useState('');
+    const [emojiRecieved, setEmojiRecieved] = useState('');
     const [emojiContainer, setEmojiContainer] = useState(false);
+    const [id, setId] = useState('');
+    const [friendId, setFriendId] = useState('');
+    const [email, setEmail] = useState('');
+    const [removeFriend, setRemoveFriend] = useState(false);
+    const [friendProfile, setFriendProfile] = useState(false);
 
-
-
-    // User ID
-    const [id, setId] = useState("");
-    // Friend ID
-    const [friendId, setFriendId] = useState("");
 
     // Get the user's ID
     useEffect(() => {
@@ -66,7 +53,6 @@ export default function Home({ navigation }) {
                         const userData = snapshot.val();
                         setNameValue(userData.name);
                         setEmail(userData.email);
-                        setPhoneNumber(userData.phoneNumber);
                         if (userData.friendId) {
                             setFriend(true);
                             setFriendId(userData.friendId);
@@ -141,25 +127,24 @@ export default function Home({ navigation }) {
             {/* Main content */}
             <View style={styles.card}>
                 <View style={{ height: '100%' }}>
-                    <TouchableOpacity style={styles.circle} onPress={() => { !friend ? setOpenFriendModalValue(true) : alert("You already have a friend") }}>
+                    <TouchableOpacity style={styles.circle} onPress={() => { !friend ? setOpenFriendModalValue(true) : setFriendProfile(true) }}>
+                        {RemoveFriend({ id, friendId, removeFriend, setRemoveFriend, friendProfile, setFriendProfile })}
                         <AddFriendModal openFriendModalVisible={openFriendModalValue} setOpenFriendModalVisible={setOpenFriendModalValue} />
                         {friend && friendProfilePicture !== "null" ? (
-                            <Image source={{ uri: friendProfilePicture }} style={{width: '100%',height: '100%',resizeMode: 'contain',alignSelf:'center'}}/>
+                            <Image source={{ uri: friendProfilePicture }} style={{ width: '100%', height: '100%', resizeMode: 'contain', alignSelf: 'center' }} />
                         )
                             : friend && friendProfilePicture == "null" ? (
-                                <Image source={require("../assets/default_pfp.png")} style={{ alignSelf: 'center',width: '100%',height: '100%',alignSelf: 'center',justifyContent: 'center',resizeMode: 'contain' }} />
+                                <Image source={require("../assets/default_pfp.png")} style={{ alignSelf: 'center', width: '100%', height: '100%', alignSelf: 'center', justifyContent: 'center', resizeMode: 'contain' }} />
                             ) : (<Image source={require("../assets/favicon.png")} style={{ alignSelf: 'center', top: '30%' }} />)
                         }
                     </TouchableOpacity>
                     <View style={{ ...styles.circle, width: '15%', height: '24%', left: '80%', borderRadius: 10, top: '-51%' }}>
                         <TouchableOpacity style={{ width: '100%', height: '100%', borderRadius: 10 }} onPress={() => { setEmojiContainer(true) }}>
-                            {emojiRecievedContainer(setEmojiContainer, emojiContainer, emojiRecieved,friendName)}
+                            {emojiRecievedContainer(setEmojiContainer, emojiContainer, emojiRecieved, friendName, friend,friendProfilePicture)}
                             <Image source={require('../assets/peach_and_gomu/onPhone.png')} style={{ width: '100%', height: '100%', resizeMode: 'contain' }} />
                         </TouchableOpacity>
                     </View>
 
-                    {/* Online status indicator */}
-                    <OnlineIndicator />
                 </View>
                 <Text adjustsFontSizeToFit style={{ fontSize: 30, left: '12%', opacity: 0.5, bottom: '30%' }}>
                     {friendName && friendName.substring(0, 1).toUpperCase() + friendName.substring(1).toLowerCase()}
@@ -265,41 +250,59 @@ const styles = StyleSheet.create({
     },
 });
 
-const OnlineIndicator = () => {
-    // State for online status
-    const [isOnline, setIsOnline] = useState(false);
 
-    // Check online status
-    useEffect(() => {
-        // Check online status
-        const checkOnlineStatus = async () => {
-            // Get the network state
-            const netInfo = await NetInfo.fetch();
-            // Set the online status
-            setIsOnline(netInfo.isConnected);
-        };
+const RemoveFriend = ({ id, friendId, removeFriend, setRemoveFriend, friendProfile, setFriendProfile,friend,friendProfilePicture }) => {
 
-        // Check online status
-        checkOnlineStatus();
+    // Remove friend from user data
+    const userRef = ref(db, `users/${id}`);
+    const friendRef = ref(db, `users/${friendId}`);
 
-        // Subscribe to network state updates
-        const unsubscribe = NetInfo.addEventListener(state => {
-            // Set the online status
-            setIsOnline(state.isConnected);
-        });
+    if (removeFriend) {
+        Promise.all([
+            update(userRef, { friendId: null }),
+            update(friendRef, { friendId: null }),
+        ])
+            .then(() => {
+                console.log('Friend removed.');
+            })
+            .catch((error) => {
+                console.error('Error removing friend:', error);
+            });
+    }
 
-        return () => {
-            // Unsubscribe from network state updates
-            unsubscribe();
-        };
-    }, []);
+    return (
+        <Modal
+            animationType='fade'
+            onRequestClose={() => { setFriendProfile(false) }}
+            visible={friendProfile}
+            transparent={true}
+            statusBarTranslucent={true}
+        >
+            <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(52, 52, 52, 0.7)', justifyContent: 'center'  }} onPress={()=>{setFriendProfile(false)}}>
+                <View style={{ width: wp('80%'), height: hp('50%'), backgroundColor: 'white', borderRadius: wp('3%'), alignSelf: 'center' }}>
+                    <View style={{ ...styles.circle, height: hp('20%'), left: wp('5%') }}>
+                        {friend && friendProfilePicture !== "null" ? (
+                            <Image source={{ uri: friendProfilePicture }} style={{ width: '100%', height: '100%', resizeMode: 'contain', alignSelf: 'center' }} />
+                        )
+                            : friend && friendProfilePicture == "null" ? (
+                                <Image source={require("../assets/default_pfp.png")} style={{ alignSelf: 'center', width: '100%', height: '100%', alignSelf: 'center', resizeMode: 'contain' }} />
+                            ) : null
+                        }
+                    </View>
+                    <Pressable onPress={() => setFriendProfile(false)} style = {{flexDirection: 'row', alignSelf: 'center',top: hp('25%')}}>
+                        <Text>
+                            Click Here to unfriend:
+                        </Text>
+                        <Text style={{textAlign:'center'}}> Remove Friend</Text>
+                    </Pressable>
+                </View>
+            </TouchableOpacity>
+        </Modal>
 
-    // Determine the dot color based on online status
-    const dotColor = isOnline ? 'green' : 'grey';
-
-    // Render the dot
-    return <View style={[styles.dot, { backgroundColor: dotColor, width: '10%', height: '15.6%', borderRadius: 200, left: '30%', bottom: '105%', borderWidth: 1, top: '-35%' }]} />;
+    );
 };
+
+
 
 function SmallWidget({ text, onPress, iconName }) {
     return (
@@ -513,7 +516,7 @@ function PromiseRenderer({ userRef, id, friendRequests, setFriend, setNotificati
     }
 }
 
-const emojiRecievedContainer = (setEmojiContainer, emojiContainer, emojiNumber,friendName) => {
+const emojiRecievedContainer = (setEmojiContainer, emojiContainer, emojiNumber, friendName) => {
     return (
         <Modal
             animationType='fade'
@@ -525,30 +528,30 @@ const emojiRecievedContainer = (setEmojiContainer, emojiContainer, emojiNumber,f
             <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(52, 52, 52, 0.7)', justifyContent: 'center' }} onPress={() => { setEmojiContainer(false) }}>
                 <View style={{ width: '80%', height: '50%', backgroundColor: 'white', alignSelf: 'center', borderRadius: 20, flexDirection: 'column' }}>
                     {emojiNumber == 0 ? (
-                        <View style = {{width: '100%',height: '100%', justifyContent: 'center'}}>
-                            <Text adjustsFontSizeToFit style ={{textAlign: 'center', bottom: '10%',fontSize: 20}}>
+                        <View style={{ width: '100%', height: '100%', justifyContent: 'center' }}>
+                            <Text adjustsFontSizeToFit style={{ textAlign: 'center', bottom: '10%', fontSize: 20 }}>
                                 You have a new message from {friendName}
                             </Text>
                             <Image source={require("../assets/peach_and_gomu/needAttention.png")} style={{ alignSelf: 'center' }} />
                         </View>
                     ) : emojiNumber == 1 ? (
-                        <View style = {{width: '100%',height: '100%', justifyContent: 'center'}}>
+                        <View style={{ width: '100%', height: '100%', justifyContent: 'center' }}>
                             <Image source={require("../assets/peach_and_gomu/goodnight.png")} style={{ alignSelf: 'center' }} />
                         </View>
                     ) : emojiNumber == 2 ? (
-                        <View style = {{width: '100%',height: '100%', justifyContent: 'center'}}>
+                        <View style={{ width: '100%', height: '100%', justifyContent: 'center' }}>
                             <Image source={require("../assets/peach_and_gomu/cry.png")} style={{ alignSelf: 'center' }} />
                         </View>
                     ) : emojiNumber == 3 ? (
-                        <View style = {{width: '100%',height: '100%', justifyContent: 'center'}}>
+                        <View style={{ width: '100%', height: '100%', justifyContent: 'center' }}>
                             <Image source={require("../assets/peach_and_gomu/happy.png")} style={{ alignSelf: 'center' }} />
                         </View>
                     ) : emojiNumber == 4 ? (
-                        <View style = {{width: '100%',height: '100%', justifyContent: 'center'}}>
+                        <View style={{ width: '100%', height: '100%', justifyContent: 'center' }}>
                             <Image source={require("../assets/peach_and_gomu/angry.png")} style={{ alignSelf: 'center' }} />
                         </View>
                     ) : emojiNumber == 5 ? (
-                        <View style = {{width: '100%',height: '100%', justifyContent: 'center'}}>
+                        <View style={{ width: '100%', height: '100%', justifyContent: 'center' }}>
                             <Image source={require("../assets/peach_and_gomu/goodmorning.png")} style={{ alignSelf: 'center' }} />
                         </View>
                     ) : null}

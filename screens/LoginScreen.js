@@ -3,7 +3,6 @@ import { StyleSheet, Text, View, Button, Image, TextInput, TouchableOpacity } fr
 import { Ionicons } from '@expo/vector-icons';
 import { auth } from '../firebase/firebase';
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
 export default function Login({ navigation }) {
@@ -42,7 +41,7 @@ export default function Login({ navigation }) {
 
     return (
         //to avoid the notch on the phones and round edges
-        <SafeAreaView style={{ flex: 1,backgroundColor:'white' }}>
+        <View style={{ flex: 1,backgroundColor:'white' }}>
             {/* The logo and text */}
             <View style={{ width: wp('60%'), height: hp('30%'), left: wp('22%'), top: hp('4%'), bottom: hp('10%') }}>
                 <Image
@@ -86,7 +85,7 @@ export default function Login({ navigation }) {
                     </Text>
                 </TouchableOpacity>
             </View>
-        </SafeAreaView>
+        </View>
     );
 };
 
