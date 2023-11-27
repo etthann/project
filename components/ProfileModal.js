@@ -7,7 +7,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../firebase/firebase";
 import { signOut } from "firebase/auth";
-import { get, child, ref } from "firebase/database";
+import { get, child, ref,set } from "firebase/database";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 
 // Create the ProfileModal component
 export default function ProfileModal({ profileModalVisible, setProfileModalVisible, navigation, name }) {
@@ -18,10 +20,11 @@ export default function ProfileModal({ profileModalVisible, setProfileModalVisib
     useEffect(() => {
         // Get the profile picture from the database
         get(child(ref(db), `users/${auth.currentUser.uid}/profilePicture`)).then((snapshot) => {
-            if (snapshot.exists() && snapshot.val() !== "null") {
+            if (snapshot.exists() && snapshot.val() !== null && snapshot.val() !== "null") {
                 setProfilePicture(snapshot.val());
+                console.log(profilePicture)
             } else {
-                console.log("No data available");
+                console.log('No pfp');
             }
         }).catch((error) => {
             console.error(error);
@@ -37,11 +40,15 @@ export default function ProfileModal({ profileModalVisible, setProfileModalVisib
             quality: 1,
         });
 
+
         // Update the profile picture if an image is selected
         if (!result.canceled) {
+            // Update the state
+            set(ref(db, `users/${auth.currentUser.uid}/profilePicture`), result.assets[0].uri);
             setProfilePicture(result.assets[0].uri);
+            console.log(profilePicture)
         }
-    }
+    };
 
     return (
         <Modal animationType="fade" transparent={true} visible={profileModalVisible} onRequestClose={() => setProfileModalVisible(false)}>
@@ -49,16 +56,16 @@ export default function ProfileModal({ profileModalVisible, setProfileModalVisib
                 {/* Header section */}
                 <View style={{ width: '100%', height: '20%', flexDirection: 'row', borderBottomLeftRadius: 20, borderBottomRightRadius: 20, backgroundColor: 'black' }}>
                     <TouchableOpacity onPress={() => setProfileModalVisible(false)}>
-                        <Feather name="chevron-left" size={30} color="white" style={{ position: 'absolute', left: 10, top: 11 }} />
+                        <Feather name="chevron-left" size={30} color="white" style={{ position: 'absolute', left: 10, top: hp('6%') }} />
                     </TouchableOpacity>
-                    <Text style={{ color: 'white', fontSize: 20, left: '40%', top: '3%' }}>Profile</Text>
+                    <Text style={{ color: 'white', fontSize: 20, left: '40%', top: hp('6%') }}>Profile</Text>
                 </View>
 
                 {/* Profile picture section */}
                 <TouchableOpacity onPress={() => pickImage()} style={{ position: 'absolute', height: '13%', width: '25%', alignSelf: 'center', top: '10%' }}>
                     <View style={{ backgroundColor: 'pink', width: '100%', height: '100%', borderRadius: 25, alignSelf: 'center', top: '25%', position: 'absolute' }}>
                         {profilePicture !== "null" ? (
-                            <Image source={{ uri: profilePicture }} style={{ width: '100%', height: '100%', borderRadius: 15, position: 'absolute' }} />
+                            <Image source={{ uri: profilePicture }} style={{ width: '100%', height: '100%', borderRadius: 15, position: 'absolute', }} />
                         ) : (
                             <Ionicons name="md-person-outline" size={80} color="black" style={{ alignSelf: 'center', justifyContent: 'center', position: 'absolute' }} />
                         )}

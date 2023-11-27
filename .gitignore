@@ -176,3 +176,9 @@ eas-cli-credentials-*.json.enc.**************
 %ProgramData%
 eas.json
 android
+
+dist
+packge-lock.json
+.dist
+/dist
+dist

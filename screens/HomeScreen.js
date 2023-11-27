@@ -15,7 +15,7 @@ import ProfileModal from '../components/ProfileModal';
 import AddFriendModal from '../components/AddFriendModal';
 import { auth, db } from '../firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { ref, onValue, get, update, remove, child } from 'firebase/database';
+import { ref, onValue, get, update, remove, child, set } from 'firebase/database';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 
@@ -258,16 +258,9 @@ const RemoveFriend = ({ id, friendId, removeFriend, setRemoveFriend, friendProfi
     const friendRef = ref(db, `users/${friendId}`);
 
     if (removeFriend) {
-        Promise.all([
-            update(userRef, { friendId: null }),
-            update(friendRef, { friendId: null }),
-        ])
-            .then(() => {
-                console.log('Friend removed.');
-            })
-            .catch((error) => {
-                console.error('Error removing friend:', error);
-            });
+        set(ref(db, `users/${id}/friendId`), {
+            friendId: null,
+        });
     }
 
     return (
@@ -278,7 +271,7 @@ const RemoveFriend = ({ id, friendId, removeFriend, setRemoveFriend, friendProfi
             transparent={true}
             statusBarTranslucent={true}
         >
-            <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(52, 52, 52, 0.7)', justifyContent: 'center'  }} onPress={()=>{setFriendProfile(false)}}>
+            <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(52, 52, 52, 0.7)', justifyContent: 'center',position: 'absolute'  }} onPress={()=>{setFriendProfile(false)}}>
                 <View style={{ width: wp('80%'), height: hp('50%'), backgroundColor: 'white', borderRadius: wp('3%'), alignSelf: 'center' }}>
                     <View style={{ ...styles.circle, height: hp('20%'), left: wp('5%') }}>
                         {friend && friendProfilePicture !== "null" ? (
@@ -289,12 +282,12 @@ const RemoveFriend = ({ id, friendId, removeFriend, setRemoveFriend, friendProfi
                             ) : null
                         }
                     </View>
-                    <Pressable onPress={() => setFriendProfile(false)} style = {{flexDirection: 'row', alignSelf: 'center',top: hp('25%')}}>
+                    <TouchableOpacity onPress={() => setFriendProfile(false)} style = {{flexDirection: 'row', alignSelf: 'center',top: hp('25%')}}>
                         <Text>
                             Click Here to unfriend:
                         </Text>
                         <Text style={{textAlign:'center'}}> Remove Friend</Text>
-                    </Pressable>
+                    </TouchableOpacity>
                 </View>
             </TouchableOpacity>
         </Modal>

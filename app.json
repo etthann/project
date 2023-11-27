@@ -63,7 +63,7 @@
     },
     "owner": "ethanieong",
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "sdkVersion"
     },
     "updates": {
       "url": "https://u.expo.dev/7d18c911-f4a7-418c-bd0d-8b7221941d86"
